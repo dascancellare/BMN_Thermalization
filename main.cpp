@@ -43,7 +43,7 @@ complex<double> get_gauss()
 void generate_matrices()
 {
   //fluttuazione
-  for(int i=0;i<glb_N;i++)
+  for(int i=1;i<glb_N;i++) //first X is 0 apart from L
     for(int ir=0;ir<N;ir++)
       {
 	X[i](ir,ir)=0;
@@ -125,11 +125,22 @@ double hamiltonian()
   return H;
 }
 
+matr_t constraint()
+{
+  matr_t C;
+  C.setZero();
+  
+  for(int i=0;i<glb_N;i++) C+=comm(X[i],P[i]);
+  
+  return C;
+}
+
 //
 void measure_observables()
 {
   cout<<X[0]<<endl;
-  cout<<"Hamiltonian: "<<hamiltonian()<<endl;
+  cout<<"Hamiltonian: "<<endl<<hamiltonian()<<endl<<endl;
+  cout<<"Constraint: "<<endl<<constraint()<<endl<<endl;
 }
 
 int main()
@@ -142,16 +153,17 @@ int main()
   cout<<"Number of integration steps: "<<nt<<" to integrate "<<T<<" in steps of "<<dt<<endl;
   
   //first half step: p(dt/2)= p(0)+ F(0)*dt/2
-  update_momenta(dt/2);
+  //update_momenta(dt/2);
   
   //integrate equation of motion using leapfrog
   for(int it=0;it<nt;it++)
     {
       cout<<"Integration step "<<it+1<<"/"<<nt<<endl;
       
+      measure_observables();
+      
       integration_step();
       
-      measure_observables();
     }
   
   return 0;
