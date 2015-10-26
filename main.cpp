@@ -31,25 +31,19 @@ vector<matr_t> X(glb_N),P(glb_N);
 //imaginary uniti
 complex<double> I(0.0,1.0);
 
+//comutation between two matrices
+matr_t comm(matr_t a,matr_t b)
+{return a*b-b*a;}
+
 //return a complex gaussian with standard deviation sqrt(h/(2n))
 complex<double> get_gauss()
 {return gauss(gen)+I*gauss(gen);}
 
-//
+//put everything to random and then overwrite with L
 void generate_matrices()
 {
-  //riempire con L
-  
-  //aggiungere fluttuazione sulle x
-  for(int i=1;i<nX;i++)
-    {
-      complex<double> delta_x=get_gauss();
-      X[i](0,N-1)=delta_x;
-      X[i](N-1,0)=conj(delta_x);
-    }
-  
-  //aggiungere fluttuazione sulle x
-  for(int i=nX;i<glb_N;i++)
+  //fluttuazione
+  for(int i=0;i<glb_N;i++)
     for(int ir=0;ir<N;ir++)
       {
 	X[i](ir,ir)=0;
@@ -61,6 +55,9 @@ void generate_matrices()
 	  }
       }
   
+  //riempire con L
+  
+  
   //metti a 0 le P tranne p[0]
   for(int i=1;i<glb_N;i++) P[i].setZero();
   P[0](N-1,N-1)=v;
@@ -68,44 +65,90 @@ void generate_matrices()
 
 //update the positions on the base of momenta
 void update_positions(double dt)
-{
-}
+{for(int i=0;i<glb_N;i++) X[i]+=P[i]*dt;}
 
 void update_momenta(double dt)
 {
-// calcola la forza
+  // calcola la forza
   vector<matr_t> F(glb_N);
   
-//aggiorna i momenti
+  //primo pezzo diverso per X ed Y
+  for(int i=0;i<nX;i++) F[i]=-X[i]-6.0*I*comm(X[(i+1)%nX],X[(i+2)%nX]);
+  for(int i=nX;i<glb_N;i++) F[i]=-0.25*X[i];
   
+  //secondo pezzo uguale per tutti
+  for(int i=0;i<glb_N;i++) for(int a=0;a<glb_N;a++) F[i]+=comm(comm(X[a],X[i]),X[i]);
+  
+  ////
+  
+  //aggiorna i momenti
+  for(int i=0;i<glb_N;i++) P[i]+=F[i]*dt;
 }
 
+//main leapfrog integration step
 void integration_step()
 {
   update_positions(dt);
   update_momenta(dt);
-  
 }
 
+double trace_square(matr_t M)
+{return (M*M).trace().real();}
+
+//compute hamiltonian
+double hamiltonian()
+{
+  double H=0;
+  
+  //momenta
+  for(int i=0;i<glb_N;i++) H+=(P[0]*P[0]).trace().real();
+  
+  //potential X
+  for(int i=0;i<nX;i++) H+=trace_square(X[i]+I*comm(X[(i+1)%nX],X[(i+2)%nX]));
+  
+  //potential Y
+  for(int a=nX;a<glb_N;a++) H+=trace_square(X[a]*X[a])/4;
+  
+  //potential Y-Y
+  for(int i=0;i<nX;i++)
+    for(int a=nX;a<glb_N;a++)
+      H+=-trace_square(comm(X[i],X[a]));
+  
+  //potential Y-Y
+  for(int a=nX;a<glb_N;a++)
+    for(int b=nX;b<glb_N;b++)
+      H+=-trace_square(comm(X[a],X[b]))/2;
+  
+  //add final 1/2
+  H/=2;
+  
+  return H;
+}
+
+//
 void measure_observables()
 {
+  cout<<X[0]<<endl;
+  cout<<"Hamiltonian: "<<hamiltonian()<<endl;
 }
 
 int main()
 {
-  //generate random variables
-  generate_random_matrices();
+  //generate random matrices+L
+  generate_matrices();
   
   //compute number of steps needed to integrate
   int nt=T/dt;
+  cout<<"Number of integration steps: "<<nt<<" to integrate "<<T<<" in steps of "<<dt<<endl;
   
   //first half step: p(dt/2)= p(0)+ F(0)*dt/2
   update_momenta(dt/2);
   
-  
-  //integrate equation of motion
+  //integrate equation of motion using leapfrog
   for(int it=0;it<nt;it++)
     {
+      cout<<"Integration step "<<it+1<<"/"<<nt<<endl;
+      
       integration_step();
       
       measure_observables();
