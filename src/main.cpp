@@ -19,8 +19,10 @@ double t=0;
 double dt=0.01;
 
 //parameters of the initial conditions
-const double h=0.001;
-const double v=10;
+//const double h=0.001;
+//const double v=10;
+const double h=0.00;
+const double v=0;
 
 //random stuff
 int seed=57683245;
@@ -43,27 +45,29 @@ complex<double> get_gauss()
 {return gauss(gen)+I*gauss(gen);}
 
 ofstream energy_file("energy");
-//define the matrices of su(2) representation of dimension j
-/*
-void generate_L (int j)
-{
-  int dimrep=2j+1;
-  vector<matr_t> Jplus(dimrep),J1(dimrep),J2(dimrep),J3(dimrep);
-  Jplus.setZero();
-  J1.setZero();
-  J2.setZero();
-  J3.setZero();
-  
-  for(int indn=0,indn+1<dimrep,indn++)
-    Jplus(indn,indn+1)=sqrt((indn+1)(2j+indn));
-  
-  J1=0.5*( Jplus + transpose(Jplus));
-  J2=-I*0.5*( Jplus - transpose(Jplus));
 
-  for(int indn=0,ind<dimrep,ind++)
-    J3(ind,ind)=j-ind;
+//define the matrices of su(2) representation of dimension j
+vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
+{
+  double j=(dimrep-1)/2;
+  
+  vector<Matrix<complex<double>,Dynamic,Dynamic> > J(3);
+  for(auto &Ji : J) Ji.resize(dimrep,dimrep);
+  
+  Matrix<complex<double>,Dynamic,Dynamic> Jplus(dimrep,dimrep);
+  Jplus.setZero();
+  
+  for(int indn=0;indn+1<dimrep;indn++) Jplus(indn,indn+1)=sqrt((indn+1)*(2*j-indn));
+  
+  J[1]=  0.5*(Jplus+Jplus.transpose());
+  J[2]=-I*0.5*(Jplus-Jplus.transpose());
+  
+  J[0].setZero();
+  for(int indn=0;indn<dimrep;indn++) J[0](indn,indn)=j-indn;
+  
+  return J;
 }
-*/
+
 //put everything to random and then overwrite with L
 void generate_matrices()
 {
@@ -81,7 +85,8 @@ void generate_matrices()
       }
   
   //riempire con L
-  
+  auto J=generate_L(n);
+  for(int i=0;i<nX;i++) X[i].block(0,0,n,n)=J[i];
   
   //metti a 0 le P tranne p[0]
   for(int i=1;i<glb_N;i++) P[i].setZero();
@@ -190,6 +195,8 @@ void measure_observables()
 
 int main()
 {
+  generate_L(1);
+  
   energy_file.precision(16);
   
   //generate random matrices+L
