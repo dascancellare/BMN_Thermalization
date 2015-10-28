@@ -27,6 +27,7 @@ normal_distribution<double> gauss(0,sqrt(h/(2*n)));
 
 //degrees of freedom
 vector<matr_t> X(glb_N),P(glb_N);
+// need to define Jplus
 
 //imaginary uniti
 complex<double> I(0.0,1.0);
@@ -38,6 +39,26 @@ matr_t comm(matr_t a,matr_t b)
 //return a complex gaussian with standard deviation sqrt(h/(2n))
 complex<double> get_gauss()
 {return gauss(gen)+I*gauss(gen);}
+
+//define the matrices of su(2) representation of dimension j
+void generate_L (int j)
+{
+  int dimrep=2j+1;
+  vector<matr_t> Jplus(dimrep),J1(dimrep),J2(dimrep),J3(dimrep);
+  Jplus.setZero();
+  J1.setZero();
+  J2.setZero();
+  J3.setZero();
+  
+  for(int indn=0,indn+1<dimrep,indn++)
+    Jplus(indn,indn+1)=sqrt((indn+1)(2j+indn));
+  
+  J1=0.5*( Jplus + transpose(Jplus));
+  J2=-I*0.5*( Jplus - transpose(Jplus));
+
+  for(int indn=0,ind<dimrep,ind++)
+    J3(ind,ind)=j-ind;
+}
 
 //put everything to random and then overwrite with L
 void generate_matrices()
@@ -77,7 +98,7 @@ void update_momenta(double dt)
   for(int i=nX;i<glb_N;i++) F[i]=-0.25*X[i];
   
   //secondo pezzo uguale per tutti
-  for(int i=0;i<glb_N;i++) for(int a=0;a<glb_N;a++) F[i]+=comm(comm(X[a],X[i]),X[i]);
+  for(int i=0;i<glb_N;i++) for(int a=0;a<glb_N;a++) F[i]+=comm(comm(X[a],X[i]),X[a]);
   
   ////
   
