@@ -9,47 +9,58 @@ using namespace Eigen;
 using namespace std;
 
 //define the type
-const int N=4,n=N-1;
+const int N=8,n=N-1;
 const int glb_N=9,nX=3;
 typedef Matrix<complex<double>,N,N> matr_t;
 
 //length of trajectory
-double T=10;
+double T=100;
 double t=0;
-double dt=0.01;
+double dt=0.001;
 
 //parameters of the initial conditions
-//const double h=0.001;
-//const double v=10;
-const double h=0.00;
-const double v=0;
+const double h=0.001;
+const double v=20;
+//const double h=0.00;
+//const double v=0;
+
+//mass squared(depending on time)
+inline double sqm(double t)
+{return 2;}
 
 //random stuff
-int seed=57683245;
+int seed=51768324;
 mt19937_64 gen(seed);
-normal_distribution<double> gauss(0,sqrt(h/(2*n)));
+normal_distribution<double> gauss(0,sqrt(h/n));
 
 //degrees of freedom
 vector<matr_t> X(glb_N),P(glb_N);
 // need to define Jplus
 
-//imaginary uniti
+//imaginary unit
 complex<double> I(0.0,1.0);
 
 //comutation between two matrices
-matr_t comm(matr_t a,matr_t b)
+template <typename Da,typename Db> auto comm(const MatrixBase<Da> &a,const MatrixBase<Db> &b) -> decltype(a*b-b*a)
 {return a*b-b*a;}
+
+//define the square
+template <class T> T square(T a)
+{return a*a;}
 
 //return a complex gaussian with standard deviation sqrt(h/(2n))
 complex<double> get_gauss()
 {return gauss(gen)+I*gauss(gen);}
 
 ofstream energy_file("energy");
+ofstream constraint_file("constraint");
+ofstream trace_file("trace");
+ofstream eigenvalues_x0_file("eigenvalues_x0");
 
 //define the matrices of su(2) representation of dimension j
 vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
 {
-  double j=(dimrep-1)/2;
+  double j=(dimrep-1.0)/2;
   
   vector<Matrix<complex<double>,Dynamic,Dynamic> > J(3);
   for(auto &Ji : J) Ji.resize(dimrep,dimrep);
@@ -71,18 +82,17 @@ vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
 //put everything to random and then overwrite with L
 void generate_matrices()
 {
+  for(auto &Xi : X) Xi.setZero();
+  
   //fluttuazione
   for(int i=1;i<glb_N;i++) //first X is 0 apart from L
     for(int ir=0;ir<N;ir++)
-      {
-	X[i](ir,ir)=0;
-	for(int ic=ir+1;ic<N;ic++)
-	  {
-	    complex<double> delta_y=get_gauss();
-	    X[i](ir,ic)=delta_y;
-	    X[i](ic,ir)=conj(delta_y);
-	  }
-      }
+      for(int ic=ir+1;ic<N;ic++)
+	{
+	  complex<double> delta_y=get_gauss();
+	  X[i](ir,ic)=delta_y;
+	  X[i](ic,ir)=conj(delta_y);
+	}
   
   //riempire con L
   auto J=generate_L(n);
@@ -93,8 +103,31 @@ void generate_matrices()
   P[0](N-1,N-1)=v;
 }
 
-double trace_square(matr_t M)
+//return the trace of the square
+template <typename D> double trace_square(const MatrixBase<D> &M)
 {return (M*M).trace().real();}
+
+double potential()
+{
+  double V=0;
+  
+  //potential X
+  for(int i=0;i<nX;i++) V+=sqm(t)*(trace_square(X[i])+
+				   2.0*(I*X[i]*comm(X[(i+1)%nX],X[(i+2)%nX])).trace().real());
+  
+  //potential Y
+  for(int a=nX;a<glb_N;a++) V+=sqm(t)*trace_square(X[a])/4;
+  
+  //common part
+  for(int a=0;a<glb_N;a++)
+    for(int b=0;b<glb_N;b++)
+      V+=-trace_square(comm(X[a],X[b]))/2;
+  
+  //add final 1/2
+  V/=2;
+  
+  return V;
+}
 
 //compute hamiltonian
 double hamiltonian()
@@ -104,25 +137,7 @@ double hamiltonian()
   for(int i=0;i<glb_N;i++) K+=trace_square(P[i]);
   K/=2;
   
-  //potential X
-  double V=0;
-  for(int i=0;i<nX;i++) V+=trace_square(X[i]+I*comm(X[(i+1)%nX],X[(i+2)%nX]));
-  
-  //potential Y
-  for(int a=nX;a<glb_N;a++) V+=trace_square(X[a])/4;
-  
-  //potential X-Y
-  for(int i=0;i<nX;i++)
-    for(int a=nX;a<glb_N;a++)
-      V+=-trace_square(comm(X[i],X[a]));
-  
-  //potential Y-Y
-  for(int a=nX;a<glb_N;a++)
-    for(int b=nX;b<glb_N;b++)
-      V+=-trace_square(comm(X[a],X[b]))/2;
-  
-  //add final 1/2
-  V/=2;
+  double V=potential();
   
   return K+V;
 }
@@ -138,8 +153,8 @@ void update_momenta(double dt)
   for(auto &Fi : F) Fi.setZero();
   
   //primo pezzo diverso per X ed Y
-  for(int i=0;i<nX;i++) F[i]=-X[i]-3.0*I*comm(X[(i+1)%nX],X[(i+2)%nX]);
-  for(int a=nX;a<glb_N;a++) F[a]=-0.25*X[a];
+  for(int i=0;i<nX;i++) F[i]=sqm(t)*(-X[i]-3.0*I*comm(X[(i+1)%nX],X[(i+2)%nX]));
+  for(int a=nX;a<glb_N;a++) F[a]=-0.25*sqm(t)*X[a];
   
   //secondo pezzo uguale per tutti
   for(int i=0;i<glb_N;i++) for(int a=0;a<glb_N;a++) F[i]+=comm(comm(X[a],X[i]),X[a]);
@@ -176,21 +191,32 @@ void integration_step()
   update_momenta(dt);
 }
 
-matr_t constraint()
+//compute the constraint (trace of the square)
+double constraint()
 {
   matr_t C;
   C.setZero();
   
   for(int i=0;i<glb_N;i++) C+=comm(X[i],P[i]);
   
-  return C;
+  return trace_square(C);
 }
 
-//
+//compute the eignevalues of X[0]
+SelfAdjointEigenSolver<matr_t> es;
+template <typename D> auto eigenvalues(const MatrixBase<D> &x) ->decltype(es.eigenvalues().transpose())
+{
+  es.compute(x);
+  return es.eigenvalues().transpose();
+}
+
+//perform all measurement
 void measure_observables()
 {
   energy_file<<t<<" "<<hamiltonian()<<endl;
-  //cout<<"Constraint: "<<endl<<constraint()<<endl<<endl;
+  constraint_file<<t<<" "<<constraint()<<endl;
+  trace_file<<t<<" "<<X[0].trace().real()<<endl;
+  eigenvalues_x0_file<<t<<" "<<eigenvalues(X[0])<<endl;
 }
 
 int main()
@@ -198,6 +224,9 @@ int main()
   generate_L(1);
   
   energy_file.precision(16);
+  constraint_file.precision(16);
+  trace_file.precision(16);
+  eigenvalues_x0_file.precision(16);
   
   //generate random matrices+L
   generate_matrices();
@@ -215,11 +244,13 @@ int main()
       cout<<"Integration step "<<it+1<<"/"<<nt<<endl;
       
       update_positions(dt);
-      update_momenta(dt/2);
-      
-      measure_observables();
-      
-      update_momenta(dt/2);
+      if(it%10==0)
+	{
+	  update_momenta(dt/2);
+	  measure_observables();
+	  update_momenta(dt/2);
+	}
+      else update_momenta(dt);
       
       t+=dt;
     }
