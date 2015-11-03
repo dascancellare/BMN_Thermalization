@@ -4,6 +4,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <cstdarg>
 
 using namespace Eigen;
 using namespace std;
@@ -14,22 +15,20 @@ const int glb_N=9,nX=3;
 typedef Matrix<complex<double>,N,N> matr_t;
 
 //length of trajectory
-double T=100;
+double T;
 double t=0;
-double dt=0.001;
+double dt;
 
 //parameters of the initial conditions
-const double h=0.001;
-const double v=20;
-//const double h=0.00;
-//const double v=0;
+double h;
+double v;
 
 //mass squared(depending on time)
 inline double sqm(double t)
-{return 2;}
+{return 1;}
 
 //random stuff
-int seed=51768324;
+int seed;
 mt19937_64 gen(seed);
 normal_distribution<double> gauss(0,sqrt(h/n));
 
@@ -39,6 +38,34 @@ vector<matr_t> X(glb_N),P(glb_N);
 
 //imaginary unit
 complex<double> I(0.0,1.0);
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define crash(...) internal_crash(__LINE__,__FILE__,__VA_ARGS__)
+
+void internal_crash(int line,const char *file,const char *temp,...)
+{
+  char buffer[1024];
+  va_list args;
+  
+  va_start(args,temp);
+  vsprintf(buffer,temp,args);
+  va_end(args);
+  
+  cerr<<"ERROR at line "<<line<<" of file "<<file<<": "<<buffer<<endl;
+  exit(1);
+}
+
+//read an element from input file
+template <class T> void read(T &out,ifstream &in,string is)
+{
+  string s;
+  if(!(in>>s)) crash("impossible to read expect string \"%s\"",is.c_str());
+  if(s!=is) crash("obtained %s while reading %s",s.c_str(),is.c_str());
+  if(!(in>>out)) crash("reading data");
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //comutation between two matrices
 template <typename Da,typename Db> auto comm(const MatrixBase<Da> &a,const MatrixBase<Db> &b) -> decltype(a*b-b*a)
@@ -97,6 +124,9 @@ void generate_matrices()
   //riempire con L
   auto J=generate_L(n);
   for(int i=0;i<nX;i++) X[i].block(0,0,n,n)=J[i];
+  
+  //original value for bottom-right corner of X[0]
+  X[0](N-1,N-1)=X[0](N-2,N-2)-1.0;
   
   //metti a 0 le P tranne p[0]
   for(int i=1;i<glb_N;i++) P[i].setZero();
@@ -164,7 +194,7 @@ void update_momenta(double dt)
 #ifdef DEBUG
   int icheck=1;
   double e_bef=hamiltonian();
-
+  
   double eps=1e-6;
   X[icheck](1,0)+=eps/2;
   X[icheck](0,1)+=eps/2;
@@ -221,6 +251,14 @@ void measure_observables()
 
 int main()
 {
+  //open the input
+  ifstream input("input");
+  read(seed,input,"seed");
+  read(T,input,"T");
+  read(dt,input,"dt");
+  read(h,input,"h");
+  read(v,input,"v");
+  
   generate_L(1);
   
   energy_file.precision(16);
