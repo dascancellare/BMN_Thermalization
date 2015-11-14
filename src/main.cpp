@@ -11,7 +11,8 @@ using namespace std;
 
 //define the type
 const int N=8,n=N-1;
-const int glb_N=9,nX=3;
+const int nX=3;
+int glb_N;
 typedef Matrix<complex<double>,N,N> matr_t;
 
 //length of trajectory
@@ -20,21 +21,26 @@ double t=0;
 double dt;
 
 //parameters of the initial conditions
-double h;
+double mass;
+double hx,hy;
 double v;
+
+//initial format
+int init_format;
+const int init_static=0,init_angular=1;
+double ang_J;
+vector<double> ang_Z,ang_A;
 
 //mass squared(depending on time)
 inline double sqm(double t)
-{return 1;}
+{return mass*mass;}
 
 //random stuff
 int seed;
-mt19937_64 gen(seed);
-normal_distribution<double> gauss(0,sqrt(h/n));
+mt19937_64 gen;
 
 //degrees of freedom
-vector<matr_t> X(glb_N),P(glb_N);
-// need to define Jplus
+vector<matr_t> X,P;
 
 //imaginary unit
 complex<double> I(0.0,1.0);
@@ -76,13 +82,21 @@ template <class T> T square(T a)
 {return a*a;}
 
 //return a complex gaussian with standard deviation sqrt(h/(2n))
-complex<double> get_gauss()
-{return gauss(gen)+I*gauss(gen);}
+complex<double> get_gauss(double h)
+{
+  normal_distribution<double> gauss(0,sqrt(h/n));
+  return gauss(gen)+I*gauss(gen);
+}
 
+ofstream kinetic_energy_file("kinetic_energy");
+ofstream common_potential_file("common_potential");
+ofstream mass_potential_file("mass_potential");
 ofstream energy_file("energy");
 ofstream constraint_file("constraint");
 ofstream trace_file("trace");
 ofstream eigenvalues_x0_file("eigenvalues_x0");
+ofstream eigenvalues_x1_file("eigenvalues_x1");
+ofstream eigenvalues_y0_file("eigenvalues_y0");
 
 //define the matrices of su(2) representation of dimension j
 vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
@@ -92,13 +106,14 @@ vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
   vector<Matrix<complex<double>,Dynamic,Dynamic> > J(3);
   for(auto &Ji : J) Ji.resize(dimrep,dimrep);
   
-  Matrix<complex<double>,Dynamic,Dynamic> Jplus(dimrep,dimrep);
-  Jplus.setZero();
+  Matrix<complex<double>,Dynamic,Dynamic> JPlus(dimrep,dimrep);
+  JPlus.setZero();
   
-  for(int indn=0;indn+1<dimrep;indn++) Jplus(indn,indn+1)=sqrt((indn+1)*(2*j-indn));
+  for(int indn=0;indn+1<dimrep;indn++) JPlus(indn,indn+1)=sqrt((indn+1)*(2*j-indn));
+  cout<<JPlus<<endl;
   
-  J[1]=  0.5*(Jplus+Jplus.transpose());
-  J[2]=-I*0.5*(Jplus-Jplus.transpose());
+  J[1]=  0.5*(JPlus+JPlus.transpose());
+  J[2]=-I*0.5*(JPlus-JPlus.transpose());
   
   J[0].setZero();
   for(int indn=0;indn<dimrep;indn++) J[0](indn,indn)=j-indn;
@@ -107,19 +122,10 @@ vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
 }
 
 //put everything to random and then overwrite with L
-void generate_matrices()
+void generate_static()
 {
-  for(auto &Xi : X) Xi.setZero();
-  
-  //fluttuazione
-  for(int i=1;i<glb_N;i++) //first X is 0 apart from L
-    for(int ir=0;ir<N;ir++)
-      for(int ic=ir+1;ic<N;ic++)
-	{
-	  complex<double> delta_y=get_gauss();
-	  X[i](ir,ic)=delta_y;
-	  X[i](ic,ir)=conj(delta_y);
-	}
+  //First is zero but for L
+  X[0].setZero();
   
   //riempire con L
   auto J=generate_L(n);
@@ -129,15 +135,70 @@ void generate_matrices()
   X[0](N-1,N-1)=X[0](N-2,N-2)-1.0;
   
   //metti a 0 le P tranne p[0]
-  for(int i=1;i<glb_N;i++) P[i].setZero();
+  for(int i=0;i<glb_N;i++) P[i].setZero();
   P[0](N-1,N-1)=v;
+}
+
+//solution with angular momenta
+void generate_angular()
+{
+  //put everything to zero
+  for(int i=0;i<nX;i++) X[i].setZero();
+  
+  //fill X[0], X+ and P+
+  matr_t XPlus,PPlus;
+  for(int ic=0;ic<N;ic++)
+    {
+      X[0](ic,ic)=ang_Z[ic];
+      XPlus(ic,(ic+1)%N)=ang_A[ic]; //there is a mismatch of a factor 2 because of the way X[1] and X[2] are defined in terms of XPlus
+      PPlus(ic,(ic+1)%N)=ang_A[ic]*I*ang_J/(4*N*square(ang_A[ic]));
+    }
+  
+  //define X[1] and X[2]
+  X[1]=    XPlus+XPlus.transpose();
+  X[2]=-I*(XPlus-XPlus.transpose());
+  
+  //define P
+  P[0].setZero();
+  P[1]=    PPlus+PPlus.adjoint();
+  P[2]=-I*(PPlus-PPlus.adjoint());
+}
+
+//wrapper
+void generate_matrices()
+{
+  for(auto &Xi : X) Xi.setZero();
+  
+  //fluttuazione
+  for(int i=0;i<glb_N;i++) //first X is 0 apart from L
+    {
+      double h;
+      if(i<nX) h=hx;
+      else     h=hy;
+      for(int ir=0;ir<N;ir++)
+	for(int ic=ir+1;ic<N;ic++)
+	  {
+	    complex<double> delta_y=get_gauss(h);
+	    X[i](ir,ic)=delta_y;
+	    X[i](ic,ir)=conj(delta_y);
+	  }
+    }
+  
+  //discriminate
+  switch(init_format)
+    {
+    case init_static:generate_static();break;
+    case init_angular:generate_angular();break;
+    default: crash("unknown init format %d!",init_format);break;
+    }
 }
 
 //return the trace of the square
 template <typename D> double trace_square(const MatrixBase<D> &M)
 {return (M*M).trace().real();}
 
-double potential()
+//compute the potential due to mass term
+double mass_potential()
 {
   double V=0;
   
@@ -148,30 +209,65 @@ double potential()
   //potential Y
   for(int a=nX;a<glb_N;a++) V+=sqm(t)*trace_square(X[a])/4;
   
+  return V/2;
+}
+
+//piece of the potential common to x and y
+double common_potential()
+{
+  double V=0;
+  
   //common part
   for(int a=0;a<glb_N;a++)
     for(int b=0;b<glb_N;b++)
       V+=-trace_square(comm(X[a],X[b]))/2;
   
-  //add final 1/2
-  V/=2;
+  return V/2;
+}
+
+double potential()
+{
+  double V=0;
+  
+  //piece coming from mass
+  V+=mass_potential();
+  
+  //add the common part (commutator)
+  V+=common_potential();
   
   return V;
 }
 
-//compute hamiltonian
-double hamiltonian()
+//compute the kinetic energy
+double kinetic_energy()
 {
   //momenta
   double K=0;
   for(int i=0;i<glb_N;i++) K+=trace_square(P[i]);
   K/=2;
   
+  return K;
+}
+
+//compute hamiltonian
+double hamiltonian()
+{
+  double K=kinetic_energy();
   double V=potential();
   
   return K+V;
 }
 
+//compute the kinetic energy of the trace of the momenta
+double kinetic_energy_trace()
+{
+  //momenta
+  double K=0;
+  for(int i=0;i<glb_N;i++) K+=square(P[i].trace().real())/N;
+  K/=2;
+  
+  return K;
+}
 //update the positions on the base of momenta
 void update_positions(double dt)
 {for(int i=0;i<glb_N;i++) X[i]+=P[i]*dt;}
@@ -243,28 +339,81 @@ template <typename D> auto eigenvalues(const MatrixBase<D> &x) ->decltype(es.eig
 //perform all measurement
 void measure_observables()
 {
+  kinetic_energy_file<<t<<" "<<kinetic_energy()-kinetic_energy_trace()<<endl;
+  common_potential_file<<t<<" "<<common_potential()<<endl;
+  mass_potential_file<<t<<" "<<mass_potential()<<endl;
   energy_file<<t<<" "<<hamiltonian()<<endl;
   constraint_file<<t<<" "<<constraint()<<endl;
   trace_file<<t<<" "<<X[0].trace().real()<<endl;
   eigenvalues_x0_file<<t<<" "<<eigenvalues(X[0])<<endl;
+  eigenvalues_x1_file<<t<<" "<<eigenvalues(X[1])<<endl;
+  eigenvalues_y0_file<<t<<" "<<eigenvalues(X[3])<<endl;
+}
+
+//read the parameters for path
+void read_angular_pars(string path)
+{
+  ifstream in(path);
+  if(!in.good()) crash("unable to open path: %s",path.c_str());
+  
+  //read J
+  if(!(in>>ang_J)) crash("unable to read J");
+  
+  //resize vectors
+  ang_A.resize(N);
+  ang_Z.resize(N);
+  
+  //read A
+  for(int i=0;i<N;i++) if(!(in>>ang_A[i])) crash("unable to read A[%d]",i);
+  
+  //read Z
+  ang_Z[N-1]=0;
+  for(int i=0;i<N-1;i++)
+    {
+      if(!(in>>ang_Z[i])) crash("unable to read Z[%d]",i);
+      ang_Z[N-1]-=ang_Z[i];
+    }
 }
 
 int main()
 {
   //open the input
   ifstream input("input");
+  if(!input.good()) crash("unable to open \"input\"");
+  
+  read(glb_N,input,"glb_N");
   read(seed,input,"seed");
   read(T,input,"T");
   read(dt,input,"dt");
-  read(h,input,"h");
+  read(mass,input,"mass");
+  read(hx,input,"hx");
+  read(hy,input,"hy");
   read(v,input,"v");
+  read(init_format,input,"init_format");
+  if(init_format==init_angular)
+    {
+      string path;
+      read(path,input,"path");
+      read_angular_pars(path);
+    }
   
-  generate_L(1);
+  //set things that depends on glb_N
+  if(glb_N<=3) crash("glb_N must be >3");
+  X.resize(glb_N);
+  P.resize(glb_N);
   
+  //init random generator device
+  gen.seed(seed);
+  
+  kinetic_energy_file.precision(16);
+  common_potential_file.precision(16);
+  mass_potential_file.precision(16);
   energy_file.precision(16);
   constraint_file.precision(16);
   trace_file.precision(16);
   eigenvalues_x0_file.precision(16);
+  eigenvalues_x1_file.precision(16);
+  eigenvalues_y0_file.precision(16);
   
   //generate random matrices+L
   generate_matrices();
