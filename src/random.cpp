@@ -9,10 +9,14 @@
 
 #include "matr.hpp"
 
-//return a complex gaussian with standard deviation sqrt(h/(2n))
-complex<double> get_gauss(double h)
+complex<double> get_rand_gauss(double h)
 {
   normal_distribution<double> gauss(0,sqrt(h/n));
   return gauss(gen)+I*gauss(gen);
 }
 
+double get_rand_double(double min,double max)
+{
+  uniform_real_distribution<double> unif(min,max);
+  return unif(gen);
+}

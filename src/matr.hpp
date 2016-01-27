@@ -7,13 +7,16 @@
 #endif
 
 #include <Eigen/Dense>
+#include <unsupported/Eigen/MatrixFunctions>
+
+#include "tools.hpp"
 
 using namespace Eigen;
 using namespace std;
 
 /////////////////////////////////////// types /////////////////////////////////
 
-//type of matrix
+//! type of matrix
 const int N=6,n=N-1;
 const int nX=3; //do not touch
 EXTERN_MATR int glb_N
@@ -25,23 +28,23 @@ typedef Matrix<complex<double>,N,N> matr_t;
 
 /////////////////////////////////////// globals ///////////////////////////////
 
-//imaginary unit
+//! imaginary unit
 extern complex<double> I;
 
-//generators
+//! generators
 EXTERN_MATR vector<matr_t> generators;
 
 ///////////////////////////////////// prototypes //////////////////////////////
 
-//fill the generators of SU(N)
+//! fill the generators of SU(N)
 void fill_generators();
 
-//define the matrices of su(2) representation of dimension j
+//! define the matrices of su(2) representation of dimension j
 vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep);
 
 ///////////////////////////////////// templates ////////////////////////////////
 
-//compute the eignevalues of X[0]
+//! compute the eignevalues of X[0]
 EXTERN_MATR SelfAdjointEigenSolver<matr_t> es;
 template <typename D> auto eigenvalues(const MatrixBase<D> &x) ->decltype(es.eigenvalues().transpose())
 {
@@ -49,17 +52,34 @@ template <typename D> auto eigenvalues(const MatrixBase<D> &x) ->decltype(es.eig
   return es.eigenvalues().transpose();
 }
 
-//commutation between two matrices
+//! commutation between two matrices
 template <typename Da,typename Db> auto comm(const MatrixBase<Da> &a,const MatrixBase<Db> &b) -> decltype(a*b-b*a)
 {return a*b-b*a;}
 
-//define the square
+//! define the square
 template <class T> T square(T a)
 {return a*a;}
 
-//return the trace of the square
+//! return the trace of the square
 template <typename D> double trace_square(const MatrixBase<D> &M)
 {return (M*M).trace().real();}
+
+//! check that glb_N has been fixed
+inline void check_gln_N_set()
+{if(glb_N<0) CRASH("please init glb_N before");}
+
+//! generate a matrix on the base of the arguments
+inline auto generate_sun(vector<double> &w) -> decltype(generators[0].exp())
+{
+  matr_t res;
+  res.setZero();
+  
+  if(generators.size()!=w.size()) CRASH("generators and coefficients have different size, %u vs %u",generators.size(),w.size());
+  
+  for(size_t i=0;i<generators.size();i++) res+=I*generators[i]*w[i];
+  
+  return res.exp();
+}
 
 #undef EXTERN_MATR
 

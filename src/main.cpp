@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdarg>
 
+#include "conf.hpp"
 #include "matr.hpp"
 #include "observables.hpp"
 #include "random.hpp"
@@ -80,7 +81,20 @@ int main()
   
   //putting to zero the mass
   theory.mass=0;
-  
+
+  //vector<double> w;
+  //for(size_t i=0;i<generators.size();i++) w.push_back(get_rand_double(0,1));
+  //conf_t gf=conf.get_gaugefixed(generate_sun(w));
+  //cout<<theory.hamiltonian(conf,0)<<endl<<theory.hamiltonian(gf,0)<<endl;
+  //return 0;
+
+  conf_t ref=conf;
+  vector<double> w;
+  integrate(conf,theory,1,obs,0.01);
+  conf.find_gaugefixing(w,ref);
+  //cout<<w<<endl;
+
+  return 0;
   integrate(conf,theory,T,obs,0.1);
   theory.mass=1e-5;
   integrate(conf,theory,1,obs,0.1);

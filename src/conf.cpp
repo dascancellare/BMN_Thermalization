@@ -8,9 +8,11 @@
 #include "random.hpp"
 #include "tools.hpp"
 
+#include <iostream>
+
 void::conf_t::generate_static(double v)
 {
-  //First is zero but for L
+  //first is zero but for L
   X[0].setZero();
   
   //fill with L
@@ -83,7 +85,7 @@ void conf_t::generate(init_setup_pars_t &pars)
       for(int ir=0;ir<N;ir++)
 	for(int ic=ir+1;ic<N;ic++)
 	  {
-	    complex<double> delta_y=get_gauss(h);
+	    complex<double> delta_y=get_rand_gauss(h);
 	    X[i](ir,ic)=delta_y;
 	    X[i](ic,ir)=conj(delta_y);
 	  }
@@ -116,3 +118,31 @@ double conf_t::kinetic_energy()
   return K;
 }
 
+void conf_t::gauge_transf(matr_t fix)
+{
+  for(int i=0;i<glb_N;i++)
+    {
+      X[i]=fix.adjoint()*X[i]*fix;
+      P[i]=fix.adjoint()*P[i]*fix;
+    }
+}
+
+conf_t conf_t::get_gauge_transformed(matr_t fix)
+{
+  conf_t out=(*this);
+  out.gauge_transf(fix);
+  
+  return out;
+}
+
+double conf_t::get_norm_with(conf_t oth)
+{
+  double norm=0;
+  for(int i=0;i<glb_N;i++)
+    {
+      norm+=(X[i].adjoint()*oth.X[i]).trace().real();
+      norm+=(P[i].adjoint()*oth.P[i]).trace().real();
+    }
+  return norm;
+  
+}

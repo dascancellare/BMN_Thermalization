@@ -2,6 +2,8 @@
  #include "config.hpp"
 #endif
 
+#include <iostream>
+
 #include "update.hpp"
 
 void update_t::update_positions(conf_t &conf,double step)
@@ -20,13 +22,71 @@ void update_t::update_leapfrog(conf_t &conf,theory_t &theory,double t)
   update_momenta(conf,theory,t,dt/2);
 }
 
-double update_t::update(conf_t &conf, theory_t &theory,double t)
+void update_t::update_Omelyan(conf_t &conf,theory_t &theory,double t)
+{
+  const double lambda=0.1931833;
+  update_momenta(conf,theory,t,lambda*dt);
+  update_positions(conf,dt/2);
+  update_momenta(conf,theory,t,(1-2*lambda)*dt);
+  update_positions(conf,dt/2);
+  update_momenta(conf,theory,t,lambda*dt);
+}
+
+double update_t::update(conf_t &conf,theory_t &theory,double t)
 {
   switch(method)
     {
     case LEAPFROG:update_leapfrog(conf,theory,t);break;
-    case OMELYAN:CRASH("not implemented yet");
+    case OMELYAN:update_Omelyan(conf,theory,t);break;
     }
   
   return dt;
+}
+
+void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs,gauge_fix_pars_t *gauge_fixer)
+{
+  //compute number of steps needed to integrate
+  int nt=DT/dt;
+  cout<<"Number of integration steps: "<<nt<<" to integrate "<<DT<<" in steps of "<<dt<<endl;
+  
+  int lastup=-1;
+  for(int it=0;it<nt;it++)
+    {
+      //print some info
+      if(it*100/nt>lastup)
+	{
+	  cout<<"Integration step "<<it<<"/"<<nt<<endl;
+	  lastup=it*100/nt;
+	}
+      
+      //meas
+      if(conf.t>=conf.meas_t)
+	{
+	  obs.measure_all(conf.t,theory,conf);
+	  conf.meas_t=conf.t+obs.meas_each;
+	}
+      
+      //update
+      double ret=update(conf,theory,conf.t);
+      conf.t+=ret;
+      
+      //subtract the trace
+      if(0)
+      for(int i=0;i<glb_N;i++)
+	{
+	  complex<double> tr;
+	  tr=conf.X[i].trace()*(1.0/N);
+	  for(int ic=0;ic<N;ic++) conf.X[i](ic,ic)-=tr;
+	  tr=conf.P[i].trace()*(1.0/N);
+	  for(int ic=0;ic<N;ic++) conf.P[i](ic,ic)-=tr;
+	}
+      
+      //cerr.precision(16);
+      //fix the gauge if needed
+      if(gauge_fixer)
+	{
+	  gauge_fixer->fix(conf);
+	  cerr<<conf.t<<" "<<(*gauge_fixer)[0]<<endl;
+	}
+    }
 }

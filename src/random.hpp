@@ -10,11 +10,13 @@
 
 using namespace std;
 
-EXTERN_RANDOM int seed;
 EXTERN_RANDOM mt19937_64 gen;
 
-//return a complex gaussian with standard deviation sqrt(h/(2n))
-complex<double> get_gauss(double h);
+//! return a complex gaussian with standard deviation sqrt(h/(2n))
+complex<double> get_rand_gauss(double h);
+
+//! return a double in the range [min,max)
+double get_rand_double(double min,double max);
 
 #undef EXTERN_RANDOM
 

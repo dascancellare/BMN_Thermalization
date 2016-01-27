@@ -9,7 +9,7 @@ using namespace std;
 
 void internal_crash(int line,const char *file,const char *temp,...);
 
-//read an element from input file
+//! read an element from input file
 template <class T> void read(T &out,ifstream &in,string is)
 {
   string s;

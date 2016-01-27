@@ -12,9 +12,12 @@
 
 using namespace std;
 
-struct obs_file
+//! keep all files for a given measure set
+struct obs_pars_t
 {
-  obs_file(string path="")
+  double meas_each;  //!< interval between measurement
+  
+  obs_pars_t(string path="",double meas_each=0.1) : meas_each(meas_each)
   {
     //open
     kin_ener.open(path+"kinetic_energy");
@@ -55,6 +58,8 @@ private:
   ofstream eig_x0;
   ofstream eig_x1;
   ofstream eig_y0;
+  
+  obs_pars_t(){}
 };
 
 #endif

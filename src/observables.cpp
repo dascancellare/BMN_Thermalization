@@ -6,7 +6,7 @@
 #include "observables.hpp"
 #include "theory.hpp"
 
-void obs_file::measure_all(double t,theory_t &theory,conf_t &conf)
+void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
 {
   kin_ener<<t<<" "<<conf.kinetic_energy()-conf.kinetic_energy_trace()<<endl;
   common_pot<<t<<" "<<theory.common_potential(conf.X)<<endl;
