@@ -25,7 +25,7 @@ struct gauge_fix_pars_t
   double find_gaugefixing(conf_t &ref);
   
   //! perform gauge fixing w.r.t store conf
-  void fix(conf_t &conf);
+  double fix(conf_t &conf);
   
   ~gauge_fix_pars_t(){delete minu;}
 private:

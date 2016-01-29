@@ -40,10 +40,11 @@ struct meas_vect : vector<double>
 ////////// parameters //////////
 
 const double therm_time=100;
-const double meas_time=200;
+const double meas_time=10;
 const double pert_time=1;
 const double pert_magn=1e-8;
-const int niters=10;
+const int niters=2;
+const bool gf=true;
 
 int main()
 {
@@ -61,7 +62,8 @@ int main()
   map<double,meas_vect> meas_diverge;
   
   //! store the final result
-  vector<conf_t> stored_end;
+  vector<conf_t> stored_end_perturbed;
+  vector<conf_t> stored_end_nonperturbed;
   
   for(int iiter=0;iiter<niters;iiter++)
     {
@@ -91,10 +93,14 @@ int main()
       
       //perturbate
       conf_t perturbed_conf=conf;
-      evolver.integrate(perturbed_conf,pert_theory,pert_time,obs_perturbed);
+      gauge_fix_pars_t *perturbed_fixer=NULL;
+      if(gf) perturbed_fixer=new gauge_fix_pars_t(perturbed_conf);
+      evolver.integrate(perturbed_conf,pert_theory,pert_time,obs_perturbed,perturbed_fixer);
       
       //not perturbated
-      evolver.integrate(conf,theory,pert_time,obs_nonperturbed);
+      gauge_fix_pars_t *fixer=NULL;
+      if(gf) fixer=new gauge_fix_pars_t(conf);
+      evolver.integrate(conf,theory,pert_time,obs_nonperturbed,fixer);
       
       //////////////////  evolve both  ///////////////////
       
@@ -106,18 +112,14 @@ int main()
 	  double diff=(perturbed_conf-conf).norm();
 	  meas_diverge[tdiverg].push_back(diff);
 	  
-	  gauge_fix_pars_t *perturbed_fixer=NULL;
-	  //perturbed_fixer=new gauge_fix_pars_t(perturbed_conf);
 	  evolver.integrate(perturbed_conf,theory,1,obs_perturbed,perturbed_fixer);
-	  
-	  gauge_fix_pars_t *fixer=NULL;
-	  //fixer=new gauge_fix_pars_t(conf);
 	  evolver.integrate(conf,theory,1,obs_nonperturbed,fixer);
 	  
 	}
       
       //store last conf
-      stored_end.push_back(conf);
+      stored_end_nonperturbed.push_back(conf);
+      stored_end_perturbed.push_back(perturbed_conf);
     }
   
   //print the divergence and its error
@@ -126,11 +128,13 @@ int main()
   
   //estimate the average distance of confs at last time
   meas_vect typical_diff;
-  for(size_t i=0;i<stored_end.size();i++)
-    for(size_t j=i+1;i<stored_end.size();i++)
-      typical_diff.push_back((stored_end[i]-stored_end[j]).norm());
+  for(size_t i=0;i<stored_end_perturbed.size();i++)
+    for(size_t j=i+1;i<stored_end_perturbed.size();i++)
+      typical_diff.push_back((stored_end_perturbed[i]-stored_end_perturbed[j]).norm());
   
   cout<<typical_diff.print_ave_err()<<endl;
+  
+  //the final difference cannot be gaugefixed
   
   return 0;
 }

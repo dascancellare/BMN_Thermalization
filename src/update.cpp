@@ -84,9 +84,9 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
       //fix the gauge if needed
       if(gauge_fixer)
 	{
-	  gauge_fixer->fix(conf);
+	  double diff=gauge_fixer->fix(conf);
 	  gauge_fixer->ref_conf=conf;
-	  cerr<<conf.t<<" "<<gauge_fixer->get_pars()[0]<<endl;
+	  cerr<<conf.t<<" "<<diff<<" "<<gauge_fixer->get_pars()[0]<<endl;
 	}
     }
 }

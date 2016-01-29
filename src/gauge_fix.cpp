@@ -55,6 +55,10 @@ double gauge_fix_pars_t::find_gaugefixing(conf_t &conf)
   ref_fix=&ref_conf;
   transforming=&conf;
   
+  //get the norm
+  double ch2_bef;
+  minu->Eval(generators.size(),NULL,ch2_bef,get_pars().data(),0);
+  
   //increase the error by 100
   for(size_t i=0;i<generators.size();i++)
     {
@@ -66,14 +70,15 @@ double gauge_fix_pars_t::find_gaugefixing(conf_t &conf)
   //minimize
   minu->Migrad();
   
-  //return the minimum
+  //get the maximized norm
   double ch2_aft;
   minu->Eval(generators.size(),NULL,ch2_aft,get_pars().data(),0);
-  return ch2_aft;
+  return ch2_aft/ch2_bef-1;
 }
 
-void gauge_fix_pars_t::fix(conf_t &conf)
+double gauge_fix_pars_t::fix(conf_t &conf)
 {
-  find_gaugefixing(conf);
+  double diff=find_gaugefixing(conf);
   conf.gauge_transf(generate_sun(get_pars()));
+  return diff;
 }
