@@ -27,6 +27,7 @@ double theory_t::mass_potential(vector<matr_t> &X,double t)
   //potential Y
   for(int a=nX;a<glb_N;a++) V+=sqm(t)*trace_square(X[a])/4;
   
+  //see ref arXiv:0306054 their -m/3 in (21) is our m in agreement with (1) of 1104.5469
   return V/2;
 }
 
@@ -38,6 +39,15 @@ double theory_t::common_potential(vector<matr_t> &X)
   for(int a=0;a<glb_N;a++)
     for(int b=0;b<glb_N;b++)
       V+=-trace_square(comm(X[a],X[b]))/2;
+  
+  if(pert)
+    {
+      matr_t XA2;
+      XA2.Zero();
+      for(int a=0;a<glb_N;a++) XA2+=X[a]*X[a];
+      
+      V+=-c1*XA2.trace().real()-c2*trace_square(XA2);
+    }
   
   return V/2;
 }
@@ -74,6 +84,17 @@ void theory_t::get_force(vector<matr_t> &F,conf_t &conf,double t)
   
   //secondo pezzo uguale per tutti
   for(int i=0;i<glb_N;i++) for(int a=0;a<glb_N;a++) F[i]+=comm(comm(conf.X[a],conf.X[i]),conf.X[a]);
+  
+  //perturbation
+  if(pert)
+    {
+      //common part of the anticommutator
+      matr_t XA2;
+      XA2.Zero();
+      for(int a=0;a<glb_N;a++) XA2+=conf.X[a]*conf.X[a];
+      
+      for(int i=0;i<glb_N;i++) F[i]+=2*c1*conf.X[i]+2*c2*anti_comm(conf.X[i],XA2);
+    }
   
   //#define DEBUG
   

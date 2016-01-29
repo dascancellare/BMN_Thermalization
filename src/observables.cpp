@@ -16,5 +16,5 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   trace<<t<<" "<<conf.X[0].trace().real()<<endl;
   eig_x0<<t<<" "<<eigenvalues(conf.X[0])<<endl;
   eig_x1<<t<<" "<<eigenvalues(conf.X[1])<<endl;
-  eig_y0<<t<<" "<<eigenvalues(conf.X[3])<<endl;
+  eig_y0<<t<<" "<<eigenvalues(comm(conf.X[0],conf.X[1]))<<endl;
 }

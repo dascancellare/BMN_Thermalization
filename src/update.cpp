@@ -47,7 +47,7 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
 {
   //compute number of steps needed to integrate
   int nt=DT/dt;
-  cout<<"Number of integration steps: "<<nt<<" to integrate "<<DT<<" in steps of "<<dt<<endl;
+  //cout<<"Number of integration steps: "<<nt<<" to integrate "<<DT<<" in steps of "<<dt<<endl;
   
   int lastup=-1;
   for(int it=0;it<nt;it++)
@@ -55,7 +55,7 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
       //print some info
       if(it*100/nt>lastup)
 	{
-	  cout<<"Integration step "<<it<<"/"<<nt<<endl;
+	  //cout<<"Integration step "<<it<<"/"<<nt<<endl;
 	  lastup=it*100/nt;
 	}
       
@@ -81,12 +81,12 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
 	  for(int ic=0;ic<N;ic++) conf.P[i](ic,ic)-=tr;
 	}
       
-      //cerr.precision(16);
       //fix the gauge if needed
       if(gauge_fixer)
 	{
 	  gauge_fixer->fix(conf);
-	  cerr<<conf.t<<" "<<(*gauge_fixer)[0]<<endl;
+	  gauge_fixer->ref_conf=conf;
+	  cerr<<conf.t<<" "<<gauge_fixer->get_pars()[0]<<endl;
 	}
     }
 }

@@ -5,8 +5,9 @@
 
 struct theory_t
 {
-  //! mass parameter
-  double mass;
+  double mass; //!< mass parameter
+  bool pert; //!< flag for perturbation
+  double c1,c2; //!< gaussian coefficient of perturbation
   
   //! mass squared(depending on time)
   inline double sqm(double t) {return mass*mass;}
@@ -28,6 +29,8 @@ struct theory_t
   
   //! compute the total hamiltonian
   double hamiltonian(conf_t &conf,double t);
+  
+  theory_t() : mass(0),pert(false),c1(1e-8),c2(1e-8) {}
 };
 
 #endif

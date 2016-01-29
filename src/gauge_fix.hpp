@@ -10,7 +10,7 @@
 using namespace std;
 
 //! hold pars to fix a gauge
-struct gauge_fix_pars_t : vector<double>
+struct gauge_fix_pars_t
 {
   conf_t ref_conf; //!< reference conf
   TMinuit *minu; //<! minimizer
@@ -18,8 +18,11 @@ struct gauge_fix_pars_t : vector<double>
   //! init fixing a reference
   gauge_fix_pars_t(conf_t ref_conf);
   
+  //! get pars
+  vector<double> get_pars();
+  
   //! find the transformed configuration that maximize the trace w.r.t ref
-  void find_gaugefixing(conf_t &ref);
+  double find_gaugefixing(conf_t &ref);
   
   //! perform gauge fixing w.r.t store conf
   void fix(conf_t &conf);

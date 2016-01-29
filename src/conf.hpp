@@ -5,18 +5,21 @@
  #define EXTERN_CONF extern
 #endif
 
+#include <functional>
+
 #include "matr.hpp"
 #include "tools.hpp"
 
 ///////////////////////////////////// types & globals //////////////////////////////////////
 
 //! init mode
-enum init_setup_kind_t{init_static,init_angular};
+enum init_setup_kind_t{init_static,init_static_traceless,init_angular};
 
 //! get the init mode from string
 inline init_setup_kind_t init_setup_find_from_string(string what)
 {
   if(what=="static") return init_static;
+  if(what=="static_traceless") return init_static_traceless;
   if(what!="angular") CRASH("use static or angular");
   return init_angular;
 }
@@ -48,6 +51,9 @@ struct conf_t
     t=meas_t=0;
   }
   
+  //! generate and fill
+  conf_t(init_setup_pars_t &pars) : conf_t() {generate(pars);}
+  
   //! make a gauge transformation
   void gauge_transf(matr_t transf);
   
@@ -65,9 +71,27 @@ struct conf_t
   
   //! compute the kinetic energy
   double kinetic_energy();
+  
+  //! difference
+  conf_t operator-(conf_t oth)
+  {
+    conf_t out;
+    transform(X.begin(),X.end(),oth.X.begin(),out.X.begin(),minus<matr_t>());
+    transform(P.begin(),P.end(),oth.P.begin(),out.P.begin(),minus<matr_t>());
+    return out;
+  }
+  
+  //! return the norm (sum of the square norm of X and P)
+  double squared_norm();
+  
+  //! return the sqrt of the sum of the square norm of X and P
+  double norm(){return sqrt(squared_norm());}
 private:
-  //! put everything to random and then overwrite with L
+  //! put everything to random and then overwrite with L (of 1 dim less)
   void generate_static(double v);
+  
+  //! same but with full L
+  void generate_static_traceless(double v);
   
   //! solution with angular momenta
   void generate_angular(string &path);

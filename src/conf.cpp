@@ -27,6 +27,20 @@ void::conf_t::generate_static(double v)
   P[0](N-1,N-1)=v;
 }
 
+void::conf_t::generate_static_traceless(double v)
+{
+  //first is zero but for L
+  X[0].setZero();
+  
+  //fill with L
+  auto J=generate_L(N);
+  for(int i=0;i<nX;i++) X[i]=J[i];
+  
+  //metti a 0 le P tranne p[0]
+  for(int i=0;i<glb_N;i++) P[i].setZero();
+  P[0](N-1,N-1)=v;
+}
+
 void conf_t::generate_angular(string &path)
 {
   //put everything to zero
@@ -95,6 +109,7 @@ void conf_t::generate(init_setup_pars_t &pars)
   switch(pars.kind)
     {
     case init_static:generate_static(pars.v);break;
+    case init_static_traceless:generate_static_traceless(pars.v);break;
     case init_angular:generate_angular(pars.path);break;
     default: CRASH("unknown init format %d!",pars.kind);break;
     }
@@ -145,4 +160,13 @@ double conf_t::get_norm_with(conf_t oth)
     }
   return norm;
   
+}
+
+double conf_t::squared_norm()
+{
+  double out=0;
+  for(auto &x : X) out+=x.squaredNorm();
+  for(auto &p : P) out+=p.squaredNorm();
+  
+  return out;
 }

@@ -56,6 +56,10 @@ template <typename D> auto eigenvalues(const MatrixBase<D> &x) ->decltype(es.eig
 template <typename Da,typename Db> auto comm(const MatrixBase<Da> &a,const MatrixBase<Db> &b) -> decltype(a*b-b*a)
 {return a*b-b*a;}
 
+//! anticommutation between two matrices
+template <typename Da,typename Db> auto anti_comm(const MatrixBase<Da> &a,const MatrixBase<Db> &b) -> decltype(a*b+b*a)
+{return a*b+b*a;}
+
 //! define the square
 template <class T> T square(T a)
 {return a*a;}
@@ -69,7 +73,7 @@ inline void check_gln_N_set()
 {if(glb_N<0) CRASH("please init glb_N before");}
 
 //! generate a matrix on the base of the arguments
-inline auto generate_sun(vector<double> &w) -> decltype(generators[0].exp())
+inline auto generate_sun(vector<double> w) -> decltype(generators[0].exp())
 {
   matr_t res;
   res.setZero();

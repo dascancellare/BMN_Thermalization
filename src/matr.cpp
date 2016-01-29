@@ -54,7 +54,6 @@ vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep)
   JPlus.setZero();
   
   for(int indn=0;indn+1<dimrep;indn++) JPlus(indn,indn+1)=sqrt((indn+1)*(2*j-indn));
-  cout<<JPlus<<endl;
   
   J[1]=  0.5*(JPlus+JPlus.transpose());
   J[2]=-I*0.5*(JPlus-JPlus.transpose());

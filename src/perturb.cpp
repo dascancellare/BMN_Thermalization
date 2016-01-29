@@ -1,8 +1,9 @@
 #include <complex>
+#include <cstdarg>
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <vector>
-#include <cstdarg>
 
 #include "conf.hpp"
 #include "matr.hpp"
@@ -15,43 +16,121 @@
 init_setup_pars_t init_pars;
 theory_t theory;
 
+struct meas_vect : vector<double>
+{
+  string print_ave_err()
+  {
+    double s=0,s2=0;
+    for(auto &meas : *this)
+      {
+	s+=meas;
+	s2+=square(meas);
+      }
+    s/=size();
+    s2/=size();
+    s2-=s*s;
+    
+    ostringstream os;
+    os<<s<<" "<<sqrt(s2/size());
+    
+    return os.str();
+  }
+};
+
+////////// parameters //////////
+
+const double therm_time=400;
+const double meas_time=200;
+const double pert_time=1;
+const double pert_magn=1e-8;
+const int niters=1;
+
 int main()
 {
   glb_N=9;
   double seed=7859634;
-  double dt=0.005;
-  theory.mass=0;
+  double dt=0.05;
+  theory.mass=1;
   
   fill_generators();
   gen.seed(seed);
   
-  //////////////////////////////////////////////////////
+  init_pars.kind=init_static_traceless;
+  init_pars.hx=init_pars.hy=0.01;
   
-  //open the two stream observable files
-  obs_pars_t obs_nonfixed("/tmp/nonfixed_");
-  obs_pars_t obs_fixed("/tmp/fixed_");
+  map<double,meas_vect> meas_diverge;
   
-  //generate random matrices+L
-  conf_t conf;
-  conf.generate(init_pars);
+  //! store the final result
+  vector<conf_t> stored_end;
   
-  //set the evolver and evolve for a common interval
-  update_t evolver(dt);
-  evolver.integrate(conf,theory,10,obs_nonfixed);
+  for(int iiter=0;iiter<niters;iiter++)
+    {
+      ///////////////////   init   //////////////////////
+      
+      obs_pars_t obs_common("/tmp/common_evolution_");
+      obs_pars_t obs_nonperturbed("/tmp/nonperturbed_");
+      obs_pars_t obs_perturbed("/tmp/perturbed_");
+      
+      //generate random matrices+L
+      conf_t conf;
+      conf.generate(init_pars);
+      
+      ////////////////// thermalize /////////////////////
+      
+      //set the evolver and evolve for a common interval
+      update_t evolver(dt);
+      evolver.integrate(conf,theory,therm_time,obs_common);
+      
+      ///////////////  perturbate or not ///////////////
+      
+      //switch on the perturbation
+      theory_t pert_theory=theory;
+      pert_theory.pert=true;
+      pert_theory.c1=get_rand_double(-pert_magn,+pert_magn);
+      pert_theory.c2=get_rand_double(-pert_magn,+pert_magn);
+      
+      //perturbate
+      conf_t perturbed_conf=conf;
+      evolver.integrate(perturbed_conf,pert_theory,pert_time,obs_perturbed);
+      
+      //not perturbated
+      evolver.integrate(conf,theory,pert_time,obs_nonperturbed);
+      
+      //////////////////  evolve both  ///////////////////
+      
+      for(double tdiverg=0;tdiverg<meas_time;tdiverg++)
+	{
+	  cout<<iiter<<" "<<conf.t<<endl;
+	  
+	  //get diff
+	  double diff=(perturbed_conf-conf).norm();
+	  meas_diverge[tdiverg].push_back(diff);
+	  
+	  gauge_fix_pars_t *perturbed_fixer=NULL;
+	  //perturbed_fixer=new gauge_fix_pars_t(perturbed_conf);
+	  evolver.integrate(perturbed_conf,theory,1,obs_perturbed,perturbed_fixer);
+	  
+	  gauge_fix_pars_t *fixer=NULL;
+	  //fixer=new gauge_fix_pars_t(conf);
+	  evolver.integrate(conf,theory,1,obs_nonperturbed,fixer);
+	  
+	}
+      
+      //store last conf
+      stored_end.push_back(conf);
+    }
   
-  //set fixing to original configuration and evolve more
-  gauge_fix_pars_t fixer(conf);
-  evolver.integrate(conf,theory,10,obs_nonfixed);
+  //print the divergence and its error
+  ofstream out("/tmp/div");
+  for(auto &it : meas_diverge) out<<it.first<<" "<<it.second.print_ave_err()<<endl;
   
-  evolver.dt/=1;
+  //estimate the average distance of confs at last time
+  meas_vect typical_diff;
+  for(size_t i=0;i<stored_end.size();i++)
+    for(size_t j=i+1;i<stored_end.size();i++)
+      typical_diff.push_back((stored_end[i]-stored_end[j]).norm());
   
-  //evolve without gaugefixed
-  conf_t conf_nonfixed=conf;
-  evolver.integrate(conf_nonfixed,theory,10,obs_nonfixed);
-  
-  //evolve with gaugefixed
-  conf_t conf_fixed=conf;
-  evolver.integrate(conf_fixed,theory,10,obs_fixed,&fixer);
+  cout<<typical_diff.print_ave_err()<<endl;
   
   return 0;
 }

@@ -30,7 +30,7 @@ void integrate(conf_t &conf,theory_t &theory,double DT,obs_file &obs,double meas
   
   //compute number of steps needed to integrate
   int nt=DT/updater.dt;
-  cout<<"Number of integration steps: "<<nt<<" to integrate "<<T<<" in steps of "<<updater.dt<<endl;  
+  cout<<"Number of integration steps: "<<nt<<" to integrate "<<T<<" in steps of "<<updater.dt<<endl;
   
   for(int it=0;it<nt;it++)
     {
