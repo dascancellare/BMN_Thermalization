@@ -39,11 +39,11 @@ struct meas_vect : vector<double>
 
 ////////// parameters //////////
 
-const double therm_time=400;
+const double therm_time=100;
 const double meas_time=200;
 const double pert_time=1;
 const double pert_magn=1e-8;
-const int niters=1;
+const int niters=10;
 
 int main()
 {
