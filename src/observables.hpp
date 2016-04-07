@@ -11,6 +11,8 @@
 #include "conf.hpp"
 #include "theory.hpp"
 
+#include <mpi.h>
+
 using namespace std;
 
 struct obs_t
@@ -28,12 +30,24 @@ struct obs_t
     n=0;
   }
   
-  void ave_err(double &ave,double &err)
+  int ave_err(double &ave,double &err)
   {
-    ave=p.first/n;
-    err=p.second/n;
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    
+    int ntot;
+    
+    MPI_Allreduce(&n,&ntot,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(&p.first,&ave,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    MPI_Allreduce(&p.second,&err,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+    cout<<"ntot rank "<<rank<<": "<<ntot<<" n: "<<n<<endl;
+    ave/=ntot;
+    err/=ntot;
+    
     err-=ave*ave;
-    err=sqrt(err/(n-1));
+    err=sqrt(err/(ntot-1));
+    
+    return ntot;
   };
   
   string ave_err_str()
@@ -41,9 +55,9 @@ struct obs_t
     ostringstream os;
     os.precision(16);
     double ave,err;
-    ave_err(ave,err);
+    int ntot=ave_err(ave,err);
     os<<ave;
-    if(n>1) os<<" "<<err;
+    if(ntot>1) os<<" "<<err;
     return os.str();
   }
   
@@ -61,18 +75,21 @@ struct obs_pars_t
   
   void write(string path="")
   {
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    
     //open
-    ofstream kin_ener_out(path+"kinetic_energy");
-    ofstream common_pot_out(path+"common_potential");
-    ofstream mass_pot_out(path+"mass_potential");
-    ofstream ener_out(path+"energy");
-    ofstream constraint_out(path+"constraint");
-    ofstream trace_out(path+"trace");
-    ofstream sq_X_trace_out(path+"sq_X_trace");
-    ofstream sq_Y_trace_out(path+"sq_Y_trace");
-    ofstream sq_Y_trace_ch1_out(path+"sq_Y_trace_ch1");
-    ofstream sq_Y_trace_ch2_out(path+"sq_Y_trace_ch2");
-    ofstream eig_x0_out(path+"eigenvalues_x0");
+    ofstream kin_ener_out(rank==0?(path+"kinetic_energy"):"/dev/null");
+    ofstream common_pot_out(rank==0?(path+"common_potential"):"/dev/null");
+    ofstream mass_pot_out(rank==0?(path+"mass_potential"):"/dev/null");
+    ofstream ener_out(rank==0?(path+"energy"):"/dev/null");
+    ofstream constraint_out(rank==0?(path+"constraint"):"/dev/null");
+    ofstream trace_out(rank==0?(path+"trace"):"/dev/null");
+    ofstream sq_X_trace_out(rank==0?(path+"sq_X_trace"):"/dev/null");
+    ofstream sq_Y_trace_out(rank==0?(path+"sq_Y_trace"):"/dev/null");
+    ofstream sq_Y_trace_ch1_out(rank==0?(path+"sq_Y_trace_ch1"):"/dev/null");
+    ofstream sq_Y_trace_ch2_out(rank==0?(path+"sq_Y_trace_ch2"):"/dev/null");
+    ofstream eig_x0_out(rank==0?(path+"eigenvalues_x0"):"/dev/null");
     // ofstream eig_x1_out(path+"eigenvalues_x1");
     // ofstream eig_y0_out(path+"eigenvalues_y0");
     

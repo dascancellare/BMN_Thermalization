@@ -17,7 +17,7 @@ using namespace std;
 /////////////////////////////////////// types /////////////////////////////////
 
 //! type of matrix
-const int N=8;
+const int N=10;
 const int nX=3; //do not touch
 EXTERN_MATR int glb_N
 #ifndef ONLY_INSTANTIATION
