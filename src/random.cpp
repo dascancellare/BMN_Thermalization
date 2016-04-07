@@ -9,11 +9,14 @@
 
 #include "matr.hpp"
 
-complex<double> get_rand_gauss(double h)
+double get_real_rand_gauss(double h)
 {
-  normal_distribution<double> gauss(0,sqrt(h/n));
-  return gauss(gen)+I*gauss(gen);
+  normal_distribution<double> gauss(0,sqrt(h));
+  return gauss(gen);
 }
+
+complex<double> get_comp_rand_gauss(double h)
+{return get_real_rand_gauss(h)+I*get_real_rand_gauss(h);}
 
 double get_rand_double(double min,double max)
 {

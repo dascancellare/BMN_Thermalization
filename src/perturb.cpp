@@ -69,9 +69,9 @@ int main()
     {
       ///////////////////   init   //////////////////////
       
-      obs_pars_t obs_common("/tmp/common_evolution_");
-      obs_pars_t obs_nonperturbed("/tmp/nonperturbed_");
-      obs_pars_t obs_perturbed("/tmp/perturbed_");
+      obs_pars_t obs_common;
+      obs_pars_t obs_nonperturbed;
+      obs_pars_t obs_perturbed;
       
       //generate random matrices+L
       conf_t conf;
@@ -120,6 +120,10 @@ int main()
       //store last conf
       stored_end_nonperturbed.push_back(conf);
       stored_end_perturbed.push_back(perturbed_conf);
+      
+      obs_common.write("/tmp/common_evolution_");
+      obs_nonperturbed.write("/tmp/nonperturbed_");
+      obs_perturbed.write("/tmp/perturbed_");
     }
   
   //print the divergence and its error

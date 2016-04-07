@@ -16,8 +16,8 @@ void::conf_t::generate_static(double v)
   X[0].setZero();
   
   //fill with L
-  auto J=generate_L(n);
-  for(int i=0;i<nX;i++) X[i].block(0,0,n,n)=J[i];
+  auto J=generate_L(N-1);
+  for(int i=0;i<nX;i++) X[i].block(0,0,N-1,N-1)=J[i];
   
   //original value for bottom-right corner of X[0]
   X[0](N-1,N-1)=X[0](N-2,N-2)-1.0;
@@ -99,7 +99,7 @@ void conf_t::generate(init_setup_pars_t &pars)
       for(int ir=0;ir<N;ir++)
 	for(int ic=ir+1;ic<N;ic++)
 	  {
-	    complex<double> delta_y=get_rand_gauss(h);
+	    complex<double> delta_y=get_comp_rand_gauss(h);
 	    X[i](ir,ic)=delta_y;
 	    X[i](ic,ir)=conj(delta_y);
 	  }
@@ -133,6 +133,49 @@ double conf_t::kinetic_energy()
   return K;
 }
 
+double conf_t::sq_X_trace()
+{
+  double S=0;
+  for(int i=0;i<nX;i++) S+=trace_square(X[i]);
+  
+  return S;
+}
+
+double conf_t::sq_Y_trace_weighted(double *coef)
+{
+  double S=0;
+  for(int i=nX;i<glb_N;i++) S+=coef[i-nX]*trace_square(X[i]);
+  
+  return S;
+}
+
+double conf_t::sq_Y_trace()
+{
+  double coef[6]={1,1,1,1,1,1};
+  return sq_Y_trace_weighted(coef);
+}
+
+double conf_t::sq_Y_trace_ch1()
+{
+  double coef[6]={1,1,1,1,-2,-2};
+  return sq_Y_trace_weighted(coef);
+}
+
+double conf_t::sq_Y_trace_ch2()
+{
+  double coef[6]={1,1,-1,-1,0,0};
+  return sq_Y_trace_weighted(coef);
+}
+
+void conf_t::hermitianize()
+{
+  for(int i=0;i<glb_N;i++)
+    {
+      X[i]=(X[i]+X[i].adjoint()).eval()/2;
+      P[i]=(P[i]+P[i].adjoint()).eval()/2;
+    }
+}
+
 void conf_t::gauge_transf(matr_t fix)
 {
   for(int i=0;i<glb_N;i++)
@@ -140,6 +183,7 @@ void conf_t::gauge_transf(matr_t fix)
       X[i]=fix.adjoint()*X[i]*fix;
       P[i]=fix.adjoint()*P[i]*fix;
     }
+  hermitianize();
 }
 
 conf_t conf_t::get_gauge_transformed(matr_t fix)

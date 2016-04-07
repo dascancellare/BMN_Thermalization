@@ -72,6 +72,15 @@ struct conf_t
   //! compute the kinetic energy
   double kinetic_energy();
   
+  //! compute the summ of the trace of the squares of all X
+  double sq_X_trace();
+  
+  //! compute the summ of the trace of the squares of all Y
+  double sq_Y_trace_weighted(double *coef);
+  double sq_Y_trace();
+  double sq_Y_trace_ch1();
+  double sq_Y_trace_ch2();
+  
   //! difference
   conf_t operator-(conf_t oth)
   {
@@ -80,6 +89,9 @@ struct conf_t
     transform(P.begin(),P.end(),oth.P.begin(),out.P.begin(),minus<matr_t>());
     return out;
   }
+  
+  //! put to hermitian
+  void hermitianize();
   
   //! return the norm (sum of the square norm of X and P)
   double squared_norm();

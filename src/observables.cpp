@@ -6,15 +6,29 @@
 #include "observables.hpp"
 #include "theory.hpp"
 
+#include <iostream>
+
+using namespace std;
+
 void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
 {
-  kin_ener<<t<<" "<<conf.kinetic_energy()-conf.kinetic_energy_trace()<<endl;
-  common_pot<<t<<" "<<theory.common_potential(conf.X)<<endl;
-  mass_pot<<t<<" "<<theory.mass_potential(conf.X,t)<<endl;
-  ener<<t<<" "<<theory.hamiltonian(conf,t)<<endl;
-  constraint<<t<<" "<<theory.constraint(conf)<<endl;
-  trace<<t<<" "<<conf.X[0].trace().real()<<endl;
-  eig_x0<<t<<" "<<eigenvalues(conf.X[0])<<endl;
-  eig_x1<<t<<" "<<eigenvalues(conf.X[1])<<endl;
-  eig_y0<<t<<" "<<eigenvalues(conf.X[nX])<<endl;
+  int it=t/meas_each;
+  //CRASH("asking to measure it=%d but only %lu possible",it,kin_ener.size());
+  
+  kin_ener[it].add(conf.kinetic_energy()-conf.kinetic_energy_trace());
+  common_pot[it].add(theory.common_potential(conf.X));
+  mass_pot[it].add(theory.mass_potential(conf.X,t));
+  ener[it].add(theory.hamiltonian(conf,t));
+  constraint[it].add(theory.constraint(conf));
+  trace[it].add(conf.X[0].trace().real());
+  sq_X_trace[it].add(conf.sq_X_trace());
+  sq_Y_trace[it].add(conf.sq_Y_trace());
+  sq_Y_trace_ch1[it].add(conf.sq_Y_trace_ch1());
+  sq_Y_trace_ch2[it].add(conf.sq_Y_trace_ch2());
+  
+  auto ei=eigenvalues(conf.X[0]);
+  for(int i=0;i<N;i++) eig_x0[it][i].add(ei(i));
+  //eig_x0<<t<<" "<<<<endl;
+  // eig_x1<<t<<" "<<eigenvalues(conf.X[1])<<endl;
+  // eig_y0<<t<<" "<<eigenvalues(conf.X[nX])<<endl;
 }

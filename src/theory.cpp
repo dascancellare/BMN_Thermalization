@@ -2,6 +2,8 @@
  #include "config.hpp"
 #endif
 
+#include <iostream>
+
 #include "conf.hpp"
 #include "matr.hpp"
 #include "theory.hpp"
@@ -114,4 +116,8 @@ void theory_t::get_force(vector<matr_t> &F,conf_t &conf,double t)
   X[icheck](1,0)-=eps;
   X[icheck](0,1)-=eps;
 #endif
+  //print the force
+  //double n=0;
+  //for(auto &Fi : F) n+=Fi.norm();
+  //cout<<n<<endl;
 }

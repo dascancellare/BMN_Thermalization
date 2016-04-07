@@ -60,7 +60,7 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
 	}
       
       //meas
-      if(conf.t>=conf.meas_t)
+      if(conf.t+obs.meas_each/10>=conf.meas_t)
 	{
 	  obs.measure_all(conf.t,theory,conf);
 	  conf.meas_t=conf.t+obs.meas_each;
@@ -88,5 +88,12 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
 	  gauge_fixer->ref_conf=conf;
 	  cerr<<conf.t<<" "<<diff<<" "<<gauge_fixer->get_pars()[0]<<endl;
 	}
+    }
+  
+  //last meas
+  if(conf.t>=conf.meas_t)
+    {
+      obs.measure_all(conf.t,theory,conf);
+      conf.meas_t=conf.t+obs.meas_each;
     }
 }

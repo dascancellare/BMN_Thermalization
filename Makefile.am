@@ -1,16 +1,32 @@
 ACLOCAL_AMFLAGS=-I m4
 
-bin_PROGRAMS=$(top_builddir)/bin/perturb $(top_builddir)/bin/jfix_finder
-__top_builddir__bin_perturb_SOURCES= \
+common_sources= \
         src/conf.cpp \
         src/gauge_fix.cpp \
         src/matr.cpp \
         src/observables.cpp \
         src/random.cpp \
         src/theory.cpp \
-        src/tools.cpp \
-        src/perturb.cpp \
+        src/tools.cpp  \
         src/update.cpp
+
+bin_PROGRAMS= \
+	$(top_builddir)/bin/perturb \
+	$(top_builddir)/bin/pert_edge \
+	$(top_builddir)/bin/jfix_finder \
+	$(top_builddir)/bin/relax
+
+__top_builddir__bin_perturb_SOURCES= \
+	$(common_sources) \
+	src/perturb.cpp
+
+__top_builddir__bin_pert_edge_SOURCES= \
+	$(common_sources) \
+	src/pert_edge.cpp
+
+__top_builddir__bin_relax_SOURCES= \
+	$(common_sources) \
+	src/relax.cpp
 
 __top_builddir__bin_jfix_finder_SOURCES= \
         src/jfix_finder.cpp
