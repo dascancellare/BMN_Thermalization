@@ -13,7 +13,7 @@ using namespace std;
 void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
 {
   int it=(t+meas_each/10)/meas_each;
-  cout<<t<<" "<<meas_each<<" "<<it<<endl;
+  
   //CRASH("asking to measure it=%d but only %lu possible",it,kin_ener.size());
   
   kin_ener[it].add(conf.kinetic_energy()-conf.kinetic_energy_trace());

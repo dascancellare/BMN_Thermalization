@@ -40,7 +40,7 @@ struct obs_t
     MPI_Allreduce(&n,&ntot,1,MPI_INTEGER,MPI_SUM,MPI_COMM_WORLD);
     MPI_Allreduce(&p.first,&ave,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
     MPI_Allreduce(&p.second,&err,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-    cout<<"ntot rank "<<rank<<": "<<ntot<<" n: "<<n<<endl;
+    
     ave/=ntot;
     err/=ntot;
     

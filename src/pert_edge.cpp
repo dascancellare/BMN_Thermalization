@@ -57,12 +57,12 @@ int main(int narg,char **arg)
   read(eps,input,"Eps");
   read(base_out,input,"BaseOut");
   
-  int nper_node=niters/nranks;
-  int istart=rank*nper_node;
-  int iend=istart+nper_node;
+  int nper_node=max(1,niters/nranks);
+  int istart=min(rank*nper_node,niters);
+  int iend=min(istart+nper_node,niters);
   if(rank==nranks-1) iend=niters;
-  if(nranks>niters) CRASH("niters %d smaller than number of ranks %d",niters,nranks);
-  
+  if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
+
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
