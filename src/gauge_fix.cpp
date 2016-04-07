@@ -25,6 +25,7 @@ gauge_fix_pars_t::gauge_fix_pars_t(conf_t ref_conf) : ref_conf(ref_conf)
 {
   //init minuit
   check_gln_N_set();
+#ifdef MINU
   minu=new TMinuit(generators.size());
   minu->SetFCN(dist);
   minu->SetPrintLevel(-1);
@@ -36,16 +37,19 @@ gauge_fix_pars_t::gauge_fix_pars_t(conf_t ref_conf) : ref_conf(ref_conf)
   int iflag;
   minu->SetMaxIterations(10000000);
   minu->mnexcm("SET ERR",&tol,1,iflag);
+#endif
 }
 
 vector<double> gauge_fix_pars_t::get_pars()
 {
   vector<double> pars(generators.size());
+#ifdef MINUIT
   for(size_t i=0;i<generators.size();i++)
     {
       double dum;
       minu->GetParameter(i,pars[i],dum);
     }
+#endif
   return pars;
 }
 
@@ -57,6 +61,7 @@ double gauge_fix_pars_t::find_gaugefixing(conf_t &conf)
   
   //get the norm
   double ch2_bef;
+#ifdef MINUIT
   minu->Eval(generators.size(),NULL,ch2_bef,get_pars().data(),0);
   
   //increase the error by 100
@@ -69,10 +74,14 @@ double gauge_fix_pars_t::find_gaugefixing(conf_t &conf)
   
   //minimize
   minu->Migrad();
-  
+#endif
   //get the maximized norm
   double ch2_aft;
+#ifdef MINUIT
   minu->Eval(generators.size(),NULL,ch2_aft,get_pars().data(),0);
+#else
+  ch2_bef=ch2_aft=0;
+#endif
   return ch2_aft/ch2_bef-1;
 }
 

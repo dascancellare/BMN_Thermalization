@@ -3,7 +3,9 @@
 
 #include <vector>
 
+#ifdef MINUIT
 #include <TMinuit.h>
+#endif
 
 #include "conf.hpp"
 
@@ -13,8 +15,9 @@ using namespace std;
 struct gauge_fix_pars_t
 {
   conf_t ref_conf; //!< reference conf
+#ifdef MINUIT
   TMinuit *minu; //<! minimizer
-  
+#endif
   //! init fixing a reference
   gauge_fix_pars_t(conf_t ref_conf);
   
@@ -27,7 +30,11 @@ struct gauge_fix_pars_t
   //! perform gauge fixing w.r.t store conf
   double fix(conf_t &conf);
   
-  ~gauge_fix_pars_t(){delete minu;}
+  ~gauge_fix_pars_t(){
+#ifdef MINUIT
+    delete minu;
+#endif
+  }
 private:
   gauge_fix_pars_t(){}
 };
