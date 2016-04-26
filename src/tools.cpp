@@ -20,3 +20,32 @@ void internal_crash(int line,const char *file,const char *temp,...)
   cerr<<"ERROR at line "<<line<<" of file "<<file<<": "<<buffer<<endl;
   exit(1);
 }
+
+//combine arguments in a single string
+string combine(const char *format,...)
+{
+  char buffer[1024];
+  va_list args;
+  
+  va_start(args,format);
+  vsprintf(buffer,format,args);
+  va_end(args);
+  
+  return buffer;
+}
+
+//check if a file exists
+int file_exists(string path)
+{
+  int status=1;
+  
+  FILE *f=fopen(path.c_str(),"r");
+  if(f!=NULL)
+    {
+      status=1;
+      fclose(f);
+    }
+  else status=0;
+  
+  return status;
+}

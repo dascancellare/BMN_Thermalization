@@ -75,6 +75,12 @@ struct conf_t
   //! compute the summ of the trace of the squares of all X
   double sq_X_trace();
   
+  //! write to a file
+  void write(string path);
+  
+  //! read to a file
+  void read(string path);
+  
   //! compute the summ of the trace of the squares of all Y
   double sq_Y_trace_weighted(double *coef);
   double sq_Y_trace();

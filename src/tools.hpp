@@ -9,6 +9,8 @@ using namespace std;
 
 void internal_crash(int line,const char *file,const char *temp,...);
 
+string combine(const char *format,...);
+
 //! read an element from input file
 template <class T> void read(T &out,ifstream &in,string is)
 {
@@ -17,5 +19,7 @@ template <class T> void read(T &out,ifstream &in,string is)
   if(s!=is) CRASH("obtained %s while reading %s",s.c_str(),is.c_str());
   if(!(in>>out)) CRASH("reading data");
 }
+
+int file_exists(string path);
 
 #endif

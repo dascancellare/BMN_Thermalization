@@ -214,3 +214,45 @@ double conf_t::squared_norm()
   
   return out;
 }
+
+void conf_t::write(string path)
+{
+  cout<<"Opening "<<path<<" to write"<<endl;
+  
+  ofstream out(path);
+  if(!out.good()) CRASH("opening %s",path.c_str());
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      {
+	for(auto &Xi : this->X) out.write((char*)&Xi(i,j),sizeof(complex<double>));
+	for(auto &Pi : this->P) out.write((char*)&Pi(i,j),sizeof(complex<double>));
+      }
+  //time
+  out<<this->t<<endl;
+  //generator
+  out<<gen<<endl;
+  
+  //close
+  out.close();
+}
+
+void conf_t::read(string path)
+{
+  cout<<"Opening "<<path<<" to read"<<endl;
+  
+  ifstream out(path);
+  if(!out.good()) CRASH("opening %s",path.c_str());
+  for(int i=0;i<N;i++)
+    for(int j=0;j<N;j++)
+      {
+	for(auto &Xi : this->X) if(!(out.read((char*)&Xi(i,j),sizeof(complex<double>)))) CRASH("reading X, i=%d j=%d",i,j);
+	for(auto &Pi : this->P) if(!(out.read((char*)&Pi(i,j),sizeof(complex<double>)))) CRASH("reading P, i=%d j=%d",i,j);
+      }
+  //time
+  if(!(out>>this->t)) CRASH("reading time");
+  //generator
+  if(!(out>>gen)) CRASH("Reading random number generator");
+  
+  //close
+  out.close();
+}

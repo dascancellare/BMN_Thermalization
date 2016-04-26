@@ -84,7 +84,13 @@ int main(int narg,char **arg)
 	  
 	  //set the evolver and evolve
 	  update_t evolver(dt);
-	  evolver.integrate(conf,theory,therm_time,obs);
+	  string path=combine("conf_%d",iiter);
+	  if(!file_exists(path))
+	    {
+	      evolver.integrate(conf,theory,therm_time,obs);
+	      conf.write(path);
+	    }
+	  else conf.read(path);
 	  
 	  //go to the base in which X0 is diagonal
 	  SelfAdjointEigenSolver<matr_t> es;
