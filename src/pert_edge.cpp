@@ -41,10 +41,11 @@ int main(int narg,char **arg)
   
   obs_pars_t obs;
   
+  ifstream input(arg[1]);
   double h;
   int niters;
+  int iX_pert;
   double eps;
-  ifstream input(arg[1]);
   string base_out;
   if(!input.good()) CRASH("unable to open \"input\"");
   read(seed,input,"Seed");
@@ -55,6 +56,7 @@ int main(int narg,char **arg)
   read(niters,input,"NIters");
   read(h,input,"h");
   read(eps,input,"Eps");
+  read(iX_pert,input,"iXPert");
   read(base_out,input,"BaseOut");
   
   int nper_node=max(1,niters/nranks);
@@ -62,7 +64,7 @@ int main(int narg,char **arg)
   int iend=min(istart+nper_node,niters);
   if(rank==nranks-1) iend=niters;
   if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
-
+  
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
@@ -94,7 +96,7 @@ int main(int narg,char **arg)
 	  
 	  //go to the base in which X0 is diagonal
 	  SelfAdjointEigenSolver<matr_t> es;
-	  conf.gauge_transf(es.compute(conf.X[0]).eigenvectors());
+	  conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
 	  
 	  //shift the largest eigenvalue
 	  //define correction for X
@@ -107,14 +109,14 @@ int main(int narg,char **arg)
 	  dP.setZero();
 	  for(int i=1;i<N-1;i++)
 	    {
-	      dP(0,i)=-eps*conf.P[0](0,i)/(eps-conf.X[0](0,0)+conf.X[0](i,i));
-	      dP(i,N-1)=-eps*conf.P[0](i,N-1)/(eps-conf.X[0](i,i)+conf.X[0](N-1,N-1));
+	      dP(0,i)=-eps*conf.P[iX_pert](0,i)/(eps-conf.X[iX_pert](0,0)+conf.X[iX_pert](i,i));
+	      dP(i,N-1)=-eps*conf.P[iX_pert](i,N-1)/(eps-conf.X[iX_pert](i,i)+conf.X[iX_pert](N-1,N-1));
 	    }
-	  dP(0,N-1)=-2*eps*conf.P[0](0,N-1)/(2*eps-conf.X[0](0,0)+conf.X[0](N-1,N-1));
+	  dP(0,N-1)=-2*eps*conf.P[iX_pert](0,N-1)/(2*eps-conf.X[iX_pert](0,0)+conf.X[iX_pert](N-1,N-1));
 	  dP=(dP+dP.adjoint()).eval();
 	  //make the transformation
-	  conf.X[0]+=dX;
-	  conf.P[0]+=dP;
+	  conf.X[iX_pert]+=dX;
+	  conf.P[iX_pert]+=dP;
 	  
 	  evolver.integrate(conf,theory,meas_time,obs);
 	}
