@@ -118,6 +118,9 @@ int main(int narg,char **arg)
 	  conf.X[iX_pert]+=dX;
 	  conf.P[iX_pert]+=dP;
 	  
+	  //mark the trace to subtracty
+	  sq_X_trace_ref=conf.sq_X_trace();
+	  
 	  evolver.integrate(conf,theory,meas_time,obs);
 	}
     }

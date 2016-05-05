@@ -3,6 +3,9 @@
 
 #ifndef EXTERN_OBSERVABLES
  #define EXTERN_OBSERVABLES extern
+ #define INIT_TO(a)
+#else
+ #define INIT_TO(a) =a
 #endif
 
 #include <fstream>
@@ -14,6 +17,8 @@
 #include <mpi.h>
 
 using namespace std;
+
+EXTERN_OBSERVABLES double sq_X_trace_ref INIT_TO(0);
 
 struct obs_t
 {
@@ -86,6 +91,7 @@ struct obs_pars_t
     ofstream constraint_out(rank==0?(path+"constraint"):"/dev/null");
     ofstream trace_out(rank==0?(path+"trace"):"/dev/null");
     ofstream sq_X_trace_out(rank==0?(path+"sq_X_trace"):"/dev/null");
+    ofstream sq_X_trace_sub_out(rank==0?(path+"sq_X_trace_sub"):"/dev/null");
     ofstream sq_Y_trace_out(rank==0?(path+"sq_Y_trace"):"/dev/null");
     ofstream sq_Y_trace_ch1_out(rank==0?(path+"sq_Y_trace_ch1"):"/dev/null");
     ofstream sq_Y_trace_ch2_out(rank==0?(path+"sq_Y_trace_ch2"):"/dev/null");
@@ -103,6 +109,7 @@ struct obs_pars_t
     ener_out.precision(16);
     constraint_out.precision(16);
     sq_X_trace_out.precision(16);
+    sq_X_trace_sub_out.precision(16);
     sq_Y_trace_out.precision(16);
     sq_Y_trace_ch1_out.precision(16);
     sq_Y_trace_ch2_out.precision(16);
@@ -117,6 +124,7 @@ struct obs_pars_t
     for(auto &x : ener) ener_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : constraint) constraint_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_X_trace) sq_X_trace_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
+    for(auto &x : sq_X_trace_sub) sq_X_trace_sub_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace) sq_Y_trace_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch1) sq_Y_trace_ch1_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch2) sq_Y_trace_ch2_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
@@ -141,6 +149,7 @@ private:
   map<int,obs_t> ener;
   map<int,obs_t> constraint;
   map<int,obs_t> sq_X_trace;
+  map<int,obs_t> sq_X_trace_sub;
   map<int,obs_t> sq_Y_trace;
   map<int,obs_t> sq_Y_trace_ch1;
   map<int,obs_t> sq_Y_trace_ch2;
@@ -149,5 +158,8 @@ private:
   // map<int,array<obs_t,N> > eig_x1;
   // map<int,array<obs_t,N> > eig_y0;
 };
+
+#undef EXTERN_OBSERVABLES
+#undef INIT_TO
 
 #endif

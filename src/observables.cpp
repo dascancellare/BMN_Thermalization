@@ -2,8 +2,10 @@
  #include "config.hpp"
 #endif
 
+#define EXTERN_OBSERVABLES
+ #include "observables.hpp"
+
 #include "conf.hpp"
-#include "observables.hpp"
 #include "theory.hpp"
 
 #include <iostream>
@@ -22,7 +24,9 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   ener[it].add(theory.hamiltonian(conf,t));
   constraint[it].add(theory.constraint(conf));
   trace[it].add(conf.X[0].trace().real());
-  sq_X_trace[it].add(conf.sq_X_trace());
+  double temp=conf.sq_X_trace();
+  sq_X_trace[it].add(temp);
+  sq_X_trace_sub[it].add(temp-sq_X_trace_ref);
   sq_Y_trace[it].add(conf.sq_Y_trace());
   sq_Y_trace_ch1[it].add(conf.sq_Y_trace_ch1());
   sq_Y_trace_ch2[it].add(conf.sq_Y_trace_ch2());
