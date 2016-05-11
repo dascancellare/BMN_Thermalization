@@ -45,6 +45,8 @@ int main(int narg,char **arg)
   double h;
   int niters;
   int iX_pert;
+  int non_null_min_mom;
+  int non_null_max_mom;
   double eps;
   string base_out;
   if(!input.good()) CRASH("unable to open \"input\"");
@@ -57,6 +59,8 @@ int main(int narg,char **arg)
   read(h,input,"h");
   read(eps,input,"Eps");
   read(iX_pert,input,"iXPert");
+  read(non_null_min_mom,input,"NonNullMinMom");
+  read(non_null_max_mom,input,"NonNullMaxMom");
   read(base_out,input,"BaseOut");
   
   int nper_node=max(1,niters/nranks);
@@ -71,10 +75,11 @@ int main(int narg,char **arg)
       conf_t conf;
       const size_t ngen=generators.size();
       for(auto &X : conf.X) X.setZero();
-      for(auto &P : conf.P)
+      for(int i=0;i<glb_N;i++)
 	{
-	  P.setZero();
-	  for(size_t a=0;a<ngen;a++) P+=generators[a]*get_real_rand_gauss(h/(N*N-1));
+	  conf.P[i].setZero();
+	  if(i>=non_null_min_mom && i<non_null_max_mom)
+	    for(size_t a=0;a<ngen;a++) conf.P[i]+=generators[a]*get_real_rand_gauss(h/(N*N-1));
 	}
       
       if(iiter>=istart &&iiter<iend)
