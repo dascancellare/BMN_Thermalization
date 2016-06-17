@@ -47,7 +47,6 @@ const bool gf=true;
 
 int main()
 {
-  glb_N=9;
   double seed=time(0);//7859634;
   double dt=0.05;
   theory.mass=1;
