@@ -20,6 +20,8 @@ using namespace std;
 
 EXTERN_OBSERVABLES double sq_X_trace_ref INIT_TO(0);
 
+const int nL=(nX*(nX-1))/2+((glb_N-nX)*((glb_N-nX)-1))/2;
+
 struct obs_t
 {
   void add(double x)
@@ -98,6 +100,7 @@ struct obs_pars_t
     ofstream eig_x0_out(rank==0?(path+"eigenvalues_x0"):"/dev/null");
     // ofstream eig_x1_out(path+"eigenvalues_x1");
     // ofstream eig_y0_out(path+"eigenvalues_y0");
+    ofstream L_out(rank==0?(path+"L"):"/dev/null");
     
     //check
     if(!kin_ener_out.good()) CRASH("check paths");
@@ -117,6 +120,7 @@ struct obs_pars_t
     eig_x0_out.precision(16);
     // eig_x1_out.precision(16);
     // eig_y0_out.precision(16);
+    L_out.precision(16);
     
     for(auto &x : kin_ener) kin_ener_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : common_pot) common_pot_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
@@ -136,7 +140,11 @@ struct obs_pars_t
       }
     //for(auto &x : eig_x1) eig_x1_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     //for(auto &x : eig_y0) eig_y0_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
-    
+    for(int i=0;i<nL;i++)
+      {
+	for(auto &x : L) L_out<<x.first*meas_each<<" "<<x.second[i].ave_err_str()<<endl;
+	L_out<<"&"<<endl;
+      }
   }
   
   //perform all measurement
@@ -157,6 +165,7 @@ private:
   map<int,array<obs_t,N> > eig_x0;
   // map<int,array<obs_t,N> > eig_x1;
   // map<int,array<obs_t,N> > eig_y0;
+  map<int,array<obs_t,nL> > L;
 };
 
 #undef EXTERN_OBSERVABLES

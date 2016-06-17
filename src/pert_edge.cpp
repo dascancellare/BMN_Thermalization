@@ -32,7 +32,6 @@ int main(int narg,char **arg)
   MPI_Comm_size(MPI_COMM_WORLD,&nranks);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   
-  glb_N=9;
   double seed;
   double dt;
   
@@ -49,8 +48,10 @@ int main(int narg,char **arg)
   int non_null_max_mom;
   double eps;
   string base_out;
+  double init_random_shift;
   if(!input.good()) CRASH("unable to open \"input\"");
   read(seed,input,"Seed");
+  read(init_random_shift,input,"InitRandomShift");
   read(therm_time,input,"ThermTime");
   read(meas_time,input,"MeasTime");
   read(dt,input,"dt");
@@ -73,6 +74,7 @@ int main(int narg,char **arg)
     {
       //generate initial conf
       conf_t conf;
+      conf.t=int(get_real_rand_gauss(init_random_shift)/dt)*dt;
       const size_t ngen=generators.size();
       for(auto &X : conf.X) X.setZero();
       for(int i=0;i<glb_N;i++)

@@ -19,11 +19,8 @@ using namespace std;
 //! type of matrix
 const int N=10;
 const int nX=3; //do not touch
-EXTERN_MATR int glb_N
-#ifndef ONLY_INSTANTIATION
-=-1
-#endif
-;
+const int glb_N=9;
+
 typedef Matrix<complex<double>,N,N> matr_t;
 
 /////////////////////////////////////// globals ///////////////////////////////
