@@ -14,7 +14,6 @@ bin_PROGRAMS= \
 	$(top_builddir)/bin/perturb \
 	$(top_builddir)/bin/pert_edge \
 	$(top_builddir)/bin/random_walk \
-	$(top_builddir)/bin/jfix_finder \
 	$(top_builddir)/bin/relax
 
 __top_builddir__bin_perturb_SOURCES= \

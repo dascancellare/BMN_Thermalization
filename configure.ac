@@ -10,6 +10,8 @@ AC_CANONICAL_HOST
 #silent automake
 AM_SILENT_RULES([yes])
 
+AC_PROG_CC
+
 #check c++11
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
