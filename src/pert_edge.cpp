@@ -74,7 +74,7 @@ int main(int narg,char **arg)
     {
       //generate initial conf
       conf_t conf;
-      conf.t=int(get_real_rand_gauss(square(init_random_shift))/dt)*dt;
+      conf.t=conf.meas_t=int(get_real_rand_gauss(square(init_random_shift))/dt)*dt;
       cout<<conf.t<<endl;
       const size_t ngen=generators.size();
       for(auto &X : conf.X) X.setZero();

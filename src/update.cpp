@@ -49,7 +49,7 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
   int nt=DT/dt;
   //cout<<"Number of integration steps: "<<nt<<" to integrate "<<DT<<" in steps of "<<dt<<endl;
   
-  int lastup=-RAND_MAX;
+  int lastup=-1;
   for(int it=0;it<nt;it++)
     {
       //print some info
