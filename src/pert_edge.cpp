@@ -99,7 +99,7 @@ int main(int narg,char **arg)
 	  string path=combine("conf_%d",iiter);
 	  if(!file_exists(path))
 	    {
-	      evolver.integrate(conf,theory,therm_time+shift_time,obs);
+	      evolver.integrate(conf,theory,therm_time-shift_time,obs);
 	      conf.write(path);
 	    }
 	  else conf.read(path);
