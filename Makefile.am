@@ -13,11 +13,8 @@ common_sources= \
 bin_PROGRAMS= \
 	$(top_builddir)/bin/perturb \
 	$(top_builddir)/bin/pert_edge \
-<<<<<<< HEAD
-=======
 	$(top_builddir)/bin/random_walk \
 	$(top_builddir)/bin/jfix_finder \
->>>>>>> 7cf8d3bc01223eb839e67eda8e0b4e89d09471c5
 	$(top_builddir)/bin/relax
 
 __top_builddir__bin_perturb_SOURCES= \
