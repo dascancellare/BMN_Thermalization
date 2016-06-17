@@ -49,16 +49,8 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
   int nt=DT/dt;
   //cout<<"Number of integration steps: "<<nt<<" to integrate "<<DT<<" in steps of "<<dt<<endl;
   
-  int lastup=-1;
   for(int it=0;it<nt;it++)
     {
-      //print some info
-      if(it*100/nt>lastup)
-	{
-	  //cout<<"Integration step "<<it<<"/"<<nt<<endl;
-	  lastup=it*100/nt;
-	}
-      
       //meas
       if(conf.t+obs.meas_each/10>=conf.meas_t)
 	{

@@ -74,7 +74,9 @@ int main(int narg,char **arg)
     {
       //generate initial conf
       conf_t conf;
-      conf.t=conf.meas_t=int(get_real_rand_gauss(square(init_random_shift))/dt)*dt;
+      double shift_time=int(get_real_rand_gauss(square(init_random_shift))/dt)*dt;
+      conf.t=shift_time;
+      conf.meas_t=-100000*obs.meas_each;
       cout<<conf.t<<endl;
       const size_t ngen=generators.size();
       for(auto &X : conf.X) X.setZero();
@@ -97,7 +99,7 @@ int main(int narg,char **arg)
 	  string path=combine("conf_%d",iiter);
 	  if(!file_exists(path))
 	    {
-	      evolver.integrate(conf,theory,therm_time,obs);
+	      evolver.integrate(conf,theory,therm_time+shift_time,obs);
 	      conf.write(path);
 	    }
 	  else conf.read(path);
