@@ -70,6 +70,7 @@ int main(int narg,char **arg)
   if(rank==nranks-1) iend=niters;
   if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
   
+  ofstream out_eig_xpert("X0_eigenvalues_prequench");
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
@@ -109,7 +110,6 @@ int main(int narg,char **arg)
 	  conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
 	  
 	  //store the eigenvalues of Y0
-	  ofstream out_eig_xpert("X0_eigenvalues_prequench");
 	  auto ei=es.compute(conf.X[nX]).eigenvalues();
 	  for(int i=0;i<N;i++) out_eig_xpert<<ei(i)<<endl;
 	  
