@@ -108,6 +108,11 @@ int main(int narg,char **arg)
 	  SelfAdjointEigenSolver<matr_t> es;
 	  conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
 	  
+	  //store the eigenvalues of Y0
+	  ofstream out_eig_xpert("X0_eigenvalues_prequench");
+	  auto ei=es.compute(conf.X[nX]).eigenvalues();
+	  for(int i=0;i<N;i++) out_eig_xpert<<ei(i)<<endl;
+	  
 	  //shift the largest eigenvalue
 	  //define correction for X
 	  matr_t dX;
