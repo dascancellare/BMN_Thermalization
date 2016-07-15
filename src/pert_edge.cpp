@@ -70,7 +70,12 @@ int main(int narg,char **arg)
   if(rank==nranks-1) iend=niters;
   if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
   
-  ofstream out_eig_xpert("X0_eigenvalues_prequench");
+  double *X0_pre=new double[N*niters];
+  double *X0_at=new double[N*niters];
+  double *X0_aft=new double[N*niters];
+  memset(X0_pre,0,sizeof(double)*N*niters);
+  memset(X0_at,0,sizeof(double)*N*niters);
+  memset(X0_aft,0,sizeof(double)*N*niters);
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
@@ -105,13 +110,13 @@ int main(int narg,char **arg)
 	    }
 	  else conf.read(path);
 	  
+	  //store the eigenvalues of Y0
+	  auto ei=es.compute(conf.X[nX]).eigenvalues();
+	  for(int i=0;i<N;i++) X0_pre[i+N*iiter]=ei(i);
+
 	  //go to the base in which X0 is diagonal
 	  SelfAdjointEigenSolver<matr_t> es;
 	  conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
-	  
-	  //store the eigenvalues of Y0
-	  auto ei=es.compute(conf.X[nX]).eigenvalues();
-	  for(int i=0;i<N;i++) out_eig_xpert<<ei(i)<<endl;
 	  
 	  //shift the largest eigenvalue
 	  //define correction for X
@@ -136,8 +141,29 @@ int main(int narg,char **arg)
 	  //mark the trace to subtracty
 	  sq_X_trace_ref=conf.sq_X_trace();
 	  
+	  //store the eigenvalues of Y0
+	  ei=es.compute(conf.X[nX]).eigenvalues();
+	  for(int i=0;i<N;i++) X0_at[i+N*iiter]=ei(i);
+	  
 	  evolver.integrate(conf,theory,meas_time,obs);
+
+	  //store the eigenvalues of Y0
+	  ei=es.compute(conf.X[nX]).eigenvalues();
+	  for(int i=0;i<N;i++) X0_aft[i+N*iiter]=ei(i);
 	}
+    }
+  
+  MPI_Allreduce(MPI_IN_PLACE,X0_pre,N*niters,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,X0_at,N*niters,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,X0_aft,N*niters,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  if(rank==0)
+    {
+      ofstream out_eig_X0_pre("X0_eigenvalues_prequench");
+      for(int i=0;i<niters*N;i++) out_eig_X0_pre<<X0_pre[i]<<endl;
+      ofstream out_eig_X0_at("X0_eigenvalues_atquench");
+      for(int i=0;i<niters*N;i++) out_eig_X0_at<<X0_at[i]<<endl;
+      ofstream out_eig_X0_aft("X0_eigenvalues_aftquenc");
+      for(int i=0;i<niters*N;i++) out_eig_X0_aft<<X0_aft[i]<<endl;
     }
   
   obs.write(base_out);
