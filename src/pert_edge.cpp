@@ -39,10 +39,11 @@ int main(int narg,char **arg)
   gen.seed(seed);
   
   obs_pars_t obs;
+  obs_pars_t fake_obs;
   
   ifstream input(arg[1]);
   double h;
-  int niters;
+  int niters,nmulti;
   int iX_pert;
   int non_null_min_mom;
   int non_null_max_mom;
@@ -57,6 +58,7 @@ int main(int narg,char **arg)
   read(dt,input,"dt");
   read(theory.mass,input,"Mass");
   read(niters,input,"NIters");
+  read(nmulti,input,"NMulti");
   read(h,input,"h");
   read(eps,input,"Eps");
   read(iX_pert,input,"iXPert");
@@ -70,16 +72,16 @@ int main(int narg,char **arg)
   if(rank==nranks-1) iend=niters;
   if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
   
-  double *X0_pre=new double[N*niters];
-  double *X0_at=new double[N*niters];
-  double *X0_aft=new double[N*niters];
-  memset(X0_pre,0,sizeof(double)*N*niters);
-  memset(X0_at,0,sizeof(double)*N*niters);
-  memset(X0_aft,0,sizeof(double)*N*niters);
+  double *Y0_pre=new double[N*niters*nmulti];
+  double *Y0_at=new double[N*niters*nmulti];
+  double *Y0_aft=new double[N*niters*nmulti];
+  memset(Y0_pre,0,sizeof(double)*N*niters*nmulti);
+  memset(Y0_at,0,sizeof(double)*N*niters*nmulti);
+  memset(Y0_aft,0,sizeof(double)*N*niters*nmulti);
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
-      conf_t conf;
+      conf_t conf,que_conf;
       double shift_time=int(get_real_rand_gauss(square(init_random_shift))/dt)*dt;
       conf.t=shift_time;
       conf.meas_t=-100000*obs.meas_each;
@@ -110,60 +112,71 @@ int main(int narg,char **arg)
 	    }
 	  else conf.read(path);
 	  
-	  //store the eigenvalues of Y0
-	  auto ei=es.compute(conf.X[nX]).eigenvalues();
-	  for(int i=0;i<N;i++) X0_pre[i+N*iiter]=ei(i);
-
-	  //go to the base in which X0 is diagonal
-	  SelfAdjointEigenSolver<matr_t> es;
-	  conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
-	  
-	  //shift the largest eigenvalue
-	  //define correction for X
-	  matr_t dX;
-	  dX.setZero();
-	  dX(0,0)=-eps;
-	  dX(N-1,N-1)=+eps;
-	  //define correction for P
-	  matr_t dP;
-	  dP.setZero();
-	  for(int i=1;i<N-1;i++)
+	  int stored_time=conf.t;
+	  for(int imulti=0;imulti<nmulti;imulti++)
 	    {
-	      dP(0,i)=-eps*conf.P[iX_pert](0,i)/(eps-conf.X[iX_pert](0,0)+conf.X[iX_pert](i,i));
-	      dP(i,N-1)=-eps*conf.P[iX_pert](i,N-1)/(eps-conf.X[iX_pert](i,i)+conf.X[iX_pert](N-1,N-1));
+	      //copy the configuration
+	      que_conf=conf;
+	      
+	      //store the eigenvalues of Y0 before the transformation
+	      auto ei=es.compute(que_conf.X[nX]).eigenvalues();
+	      for(int i=0;i<N;i++) Y0_pre[i+N*(imulti+nmulti*iiter)]=ei(i);
+	      
+	      //go to the base in which X0 is diagonal
+	      SelfAdjointEigenSolver<matr_t> es;
+	      que_conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
+	      
+	      //shift the largest eigenvalue
+	      //define correction for X
+	      matr_t dX;
+	      dX.setZero();
+	      dX(0,0)=-eps;
+	      dX(N-1,N-1)=+eps;
+	      //define correction for P
+	      matr_t dP;
+	      dP.setZero();
+	      for(int i=1;i<N-1;i++)
+		{
+		  dP(0,i)=-eps*que_conf.P[iX_pert](0,i)/(eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](i,i));
+		  dP(i,N-1)=-eps*que_conf.P[iX_pert](i,N-1)/(eps-que_conf.X[iX_pert](i,i)+que_conf.X[iX_pert](N-1,N-1));
+		}
+	      dP(0,N-1)=-2*eps*que_conf.P[iX_pert](0,N-1)/(2*eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](N-1,N-1));
+	      dP=(dP+dP.adjoint()).eval();
+	      //make the transformation
+	      que_conf.X[iX_pert]+=dX;
+	      que_conf.P[iX_pert]+=dP;
+	      
+	      //store the eigenvalues of Y0 at the transformation
+	      ei=es.compute(que_conf.X[nX]).eigenvalues();
+	      for(int i=0;i<N;i++) Y0_at[i+N*(imulti+nmulti*iiter)]=ei(i);
+	      
+	      //mark the trace to subtracty
+	      sq_X_trace_ref=que_conf.sq_X_trace();
+	      
+	      //evolve perturbed
+	      evolver.integrate(que_conf,theory,meas_time,obs);
+	      //store the eigenvalues of Y0 after retermalization
+	      ei=es.compute(que_conf.X[nX]).eigenvalues();
+	      for(int i=0;i<N;i++) Y0_aft[i+N*(imulti+nmulti*iiter)]=ei(i);
+	      
+	      //evlove unperturbed
+	      evolver.integrate(conf,theory,meas_time,fake_obs);
+	      conf.t=stored_time;
 	    }
-	  dP(0,N-1)=-2*eps*conf.P[iX_pert](0,N-1)/(2*eps-conf.X[iX_pert](0,0)+conf.X[iX_pert](N-1,N-1));
-	  dP=(dP+dP.adjoint()).eval();
-	  //make the transformation
-	  conf.X[iX_pert]+=dX;
-	  conf.P[iX_pert]+=dP;
-	  
-	  //mark the trace to subtracty
-	  sq_X_trace_ref=conf.sq_X_trace();
-	  
-	  //store the eigenvalues of Y0
-	  ei=es.compute(conf.X[nX]).eigenvalues();
-	  for(int i=0;i<N;i++) X0_at[i+N*iiter]=ei(i);
-	  
-	  evolver.integrate(conf,theory,meas_time,obs);
-
-	  //store the eigenvalues of Y0
-	  ei=es.compute(conf.X[nX]).eigenvalues();
-	  for(int i=0;i<N;i++) X0_aft[i+N*iiter]=ei(i);
 	}
     }
   
-  MPI_Allreduce(MPI_IN_PLACE,X0_pre,N*niters,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE,X0_at,N*niters,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE,X0_aft,N*niters,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,Y0_pre,N*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,Y0_at,N*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,Y0_aft,N*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   if(rank==0)
     {
-      ofstream out_eig_X0_pre("X0_eigenvalues_prequench");
-      for(int i=0;i<niters*N;i++) out_eig_X0_pre<<X0_pre[i]<<endl;
-      ofstream out_eig_X0_at("X0_eigenvalues_atquench");
-      for(int i=0;i<niters*N;i++) out_eig_X0_at<<X0_at[i]<<endl;
-      ofstream out_eig_X0_aft("X0_eigenvalues_aftquenc");
-      for(int i=0;i<niters*N;i++) out_eig_X0_aft<<X0_aft[i]<<endl;
+      ofstream out_eig_Y0_pre("Y0_eigenvalues_prequench");
+      for(int i=0;i<niters*N*nmulti;i++) out_eig_Y0_pre<<Y0_pre[i]<<endl;
+      ofstream out_eig_Y0_at("Y0_eigenvalues_atquench");
+      for(int i=0;i<niters*N*nmulti;i++) out_eig_Y0_at<<Y0_at[i]<<endl;
+      ofstream out_eig_Y0_aft("Y0_eigenvalues_aftquenc");
+      for(int i=0;i<niters*N*nmulti;i++) out_eig_Y0_aft<<Y0_aft[i]<<endl;
     }
   
   obs.write(base_out);

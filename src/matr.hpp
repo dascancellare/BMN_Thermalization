@@ -17,7 +17,7 @@ using namespace std;
 /////////////////////////////////////// types /////////////////////////////////
 
 //! type of matrix
-const int N=10;
+const int N=6;
 const int nX=3; //do not touch
 const int glb_N=9;
 
