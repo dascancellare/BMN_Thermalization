@@ -39,10 +39,11 @@ int main(int narg,char **arg)
   gen.seed(seed);
   
   obs_pars_t obs;
+  obs_pars_t fake_obs;
   
   ifstream input(arg[1]);
   double h;
-  int niters;
+  int niters,nmulti;
   int iX_pert;
   int non_null_min_mom;
   int non_null_max_mom;
@@ -57,6 +58,7 @@ int main(int narg,char **arg)
   read(dt,input,"dt");
   read(theory.mass,input,"Mass");
   read(niters,input,"NIters");
+  read(nmulti,input,"NMulti");
   read(h,input,"h");
   read(eps,input,"Eps");
   read(iX_pert,input,"iXPert");
@@ -70,7 +72,8 @@ int main(int narg,char **arg)
   if(rank==nranks-1) iend=niters;
   if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
   
-  ofstream out_eig_xpert("X0_eigenvalues_prequench");
+  ofstream out_eig_xpert("Y0_eigenvalues_prequench");
+  conf_t que_conf;
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
@@ -105,38 +108,47 @@ int main(int narg,char **arg)
 	    }
 	  else conf.read(path);
 	  
-	  //go to the base in which X0 is diagonal
-	  SelfAdjointEigenSolver<matr_t> es;
-	  conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
-	  
-	  //store the eigenvalues of Y0
-	  auto ei=es.compute(conf.X[nX]).eigenvalues();
-	  for(int i=0;i<N;i++) out_eig_xpert<<ei(i)<<endl;
-	  
-	  //shift the largest eigenvalue
-	  //define correction for X
-	  matr_t dX;
-	  dX.setZero();
-	  dX(0,0)=-eps;
-	  dX(N-1,N-1)=+eps;
-	  //define correction for P
-	  matr_t dP;
-	  dP.setZero();
-	  for(int i=1;i<N-1;i++)
+	  int stored_time=conf.t;
+	  for(int imulti=0;imulti<nmulti;imulti++)
 	    {
-	      dP(0,i)=-eps*conf.P[iX_pert](0,i)/(eps-conf.X[iX_pert](0,0)+conf.X[iX_pert](i,i));
-	      dP(i,N-1)=-eps*conf.P[iX_pert](i,N-1)/(eps-conf.X[iX_pert](i,i)+conf.X[iX_pert](N-1,N-1));
+	      //copy the configuration
+	      que_conf=conf;
+	      
+	      //go to the base in which X0 is diagonal
+	      SelfAdjointEigenSolver<matr_t> es;
+	      que_conf.gauge_transf(es.compute(conf.X[iX_pert]).eigenvectors());
+	      
+	      //store the eigenvalues of Y0
+	      auto ei=es.compute(que_conf.X[nX]).eigenvalues();
+	      for(int i=0;i<N;i++) out_eig_xpert<<ei(i)<<endl;
+	      
+	      //shift the largest eigenvalue
+	      //define correction for X
+	      matr_t dX;
+	      dX.setZero();
+	      dX(0,0)=-eps;
+	      dX(N-1,N-1)=+eps;
+	      //define correction for P
+	      matr_t dP;
+	      dP.setZero();
+	      for(int i=1;i<N-1;i++)
+		{
+		  dP(0,i)=-eps*que_conf.P[iX_pert](0,i)/(eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](i,i));
+		  dP(i,N-1)=-eps*que_conf.P[iX_pert](i,N-1)/(eps-que_conf.X[iX_pert](i,i)+que_conf.X[iX_pert](N-1,N-1));
+		}
+	      dP(0,N-1)=-2*eps*que_conf.P[iX_pert](0,N-1)/(2*eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](N-1,N-1));
+	      dP=(dP+dP.adjoint()).eval();
+	      //make the transformation
+	      que_conf.X[iX_pert]+=dX;
+	      que_conf.P[iX_pert]+=dP;
+	      
+	      //mark the trace to subtracty
+	      sq_X_trace_ref=que_conf.sq_X_trace();
+	      
+	      evolver.integrate(que_conf,theory,meas_time,obs);
+	      evolver.integrate(conf,theory,meas_time,fake_obs);
+	      conf.t=stored_time;
 	    }
-	  dP(0,N-1)=-2*eps*conf.P[iX_pert](0,N-1)/(2*eps-conf.X[iX_pert](0,0)+conf.X[iX_pert](N-1,N-1));
-	  dP=(dP+dP.adjoint()).eval();
-	  //make the transformation
-	  conf.X[iX_pert]+=dX;
-	  conf.P[iX_pert]+=dP;
-	  
-	  //mark the trace to subtracty
-	  sq_X_trace_ref=conf.sq_X_trace();
-	  
-	  evolver.integrate(conf,theory,meas_time,obs);
 	}
     }
   
