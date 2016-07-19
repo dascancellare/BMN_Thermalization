@@ -1,6 +1,10 @@
 #ifndef _MATR_HPP
 #define _MATR_HPP
 
+#ifdef HAVE_CONFIG_H
+ #include "config.hpp"
+#endif
+
 #ifndef EXTERN_MATR
  #define EXTERN_MATR extern
  #define ONLY_INSTANTIATION
@@ -17,11 +21,10 @@ using namespace std;
 /////////////////////////////////////// types /////////////////////////////////
 
 //! type of matrix
-const int N=6;
 const int nX=3; //do not touch
 const int glb_N=9;
 
-typedef Matrix<complex<double>,N,N> matr_t;
+typedef Matrix<complex<double>,NCOL,NCOL> matr_t;
 
 /////////////////////////////////////// globals ///////////////////////////////
 

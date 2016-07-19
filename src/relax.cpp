@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+ #include "config.hpp"
+#endif
+
 #include <complex>
 #include <cstdarg>
 #include <fstream>
@@ -63,8 +67,8 @@ int main()
   for(auto &Pi : conf.P) Pi.setZero();
   
   for(int i=0;i<nX+1;i++)
-    for(int ir=0;ir<N-1;ir++)
-      for(int ic=ir+1;ic<N-1;ic++)
+    for(int ir=0;ir<NCOL-1;ir++)
+      for(int ic=ir+1;ic<NCOL-1;ic++)
 	{
 	  complex<double> delta_y=get_comp_rand_gauss(0.1);
 	  conf.X[i](ir,ic)=delta_y;
@@ -77,12 +81,12 @@ int main()
   update_t evolver(dt);
   evolver.integrate(conf,theory,therm_time,obs);
   
-  for(int i=0;i<N;i++)
+  for(int i=0;i<NCOL;i++)
     {
-      conf.X[nX](i,N-1)=get_comp_rand_gauss(1e-8);
-      conf.X[nX](N-1,i)=conj(conf.X[nX](i,N-1));
+      conf.X[nX](i,NCOL-1)=get_comp_rand_gauss(1e-8);
+      conf.X[nX](NCOL-1,i)=conj(conf.X[nX](i,NCOL-1));
     }
-  conf.X[nX](N-1,N-1)=0.001;
+  conf.X[nX](NCOL-1,NCOL-1)=0.001;
   
   evolver.integrate(conf,theory,meas_time,obs);
   

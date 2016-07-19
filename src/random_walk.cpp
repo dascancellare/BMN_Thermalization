@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+ #include "config.hpp"
+#endif
+
 #include <complex>
 #include <cstdarg>
 #include <fstream>
@@ -30,7 +34,7 @@ int main(int narg,char **arg)
   M.setZero();
   const size_t ngen=generators.size();
   
-  array<vector<double>,N> o;
+  array<vector<double>,NCOL> o;
   const double h=0.01;
 
   matr_t id;
@@ -57,11 +61,11 @@ int main(int narg,char **arg)
       //M/=1+h;
       SelfAdjointEigenSolver<matr_t> es;
       auto e=es.compute(M).eigenvalues();
-      for(int i=0;i<N;i++) o[i].push_back(e(i));
+      for(int i=0;i<NCOL;i++) o[i].push_back(e(i));
     }
 
   ofstream out("/tmp/eig");
-  for(int i=0;i<N;i++)
+  for(int i=0;i<NCOL;i++)
     {
       double t=0;
       for(auto &x : o[i])

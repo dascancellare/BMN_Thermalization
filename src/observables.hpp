@@ -133,7 +133,7 @@ struct obs_pars_t
     for(auto &x : sq_Y_trace_ch1) sq_Y_trace_ch1_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch2) sq_Y_trace_ch2_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : trace) trace_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
-    for(int i=0;i<N;i++)
+    for(int i=0;i<NCOL;i++)
       {
 	for(auto &x : eig_x0) eig_x0_out<<x.first*meas_each<<" "<<x.second[i].ave_err_str()<<endl;
 	eig_x0_out<<"&"<<endl;
@@ -162,7 +162,7 @@ private:
   map<int,obs_t> sq_Y_trace_ch1;
   map<int,obs_t> sq_Y_trace_ch2;
   map<int,obs_t> trace;
-  map<int,array<obs_t,N> > eig_x0;
+  map<int,array<obs_t,NCOL> > eig_x0;
   // map<int,array<obs_t,N> > eig_x1;
   // map<int,array<obs_t,N> > eig_y0;
   map<int,array<obs_t,nL> > L;

@@ -13,8 +13,8 @@ complex<double> I(0.0,1.0);
 
 void fill_generators()
 {
-  for(int i=0;i<N;i++)
-    for(int j=i+1;j<N;j++)
+  for(int i=0;i<NCOL;i++)
+    for(int j=i+1;j<NCOL;j++)
       {
 	matr_t gen;
 	
@@ -31,7 +31,7 @@ void fill_generators()
       }
   
   //diagonal generator
-  for(int i=1;i<N;i++)
+  for(int i=1;i<NCOL;i++)
     {
       matr_t gen;
       

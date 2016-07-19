@@ -32,7 +32,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   sq_Y_trace_ch2[it].add(conf.sq_Y_trace_ch2());
   
   auto ei=eigenvalues(conf.X[0]);
-  for(int i=0;i<N;i++) eig_x0[it][i].add(ei(i));
+  for(int i=0;i<NCOL;i++) eig_x0[it][i].add(ei(i));
   
   //angular momentum
   int nset=2,imin[2]={0,nX},imax[2]={nX,glb_N},ipair=0;

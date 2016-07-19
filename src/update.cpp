@@ -67,10 +67,10 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
       for(int i=0;i<glb_N;i++)
 	{
 	  complex<double> tr;
-	  tr=conf.X[i].trace()*(1.0/N);
-	  for(int ic=0;ic<N;ic++) conf.X[i](ic,ic)-=tr;
-	  tr=conf.P[i].trace()*(1.0/N);
-	  for(int ic=0;ic<N;ic++) conf.P[i](ic,ic)-=tr;
+	  tr=conf.X[i].trace()*(1.0/NCOL);
+	  for(int ic=0;ic<NCOL;ic++) conf.X[i](ic,ic)-=tr;
+	  tr=conf.P[i].trace()*(1.0/NCOL);
+	  for(int ic=0;ic<NCOL;ic++) conf.P[i](ic,ic)-=tr;
 	}
       
       //fix the gauge if needed

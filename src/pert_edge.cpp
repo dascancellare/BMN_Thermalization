@@ -1,3 +1,7 @@
+#ifdef HAVE_CONFIG_H
+ #include "config.hpp"
+#endif
+
 #include <complex>
 #include <cstdarg>
 #include <fstream>
@@ -72,12 +76,12 @@ int main(int narg,char **arg)
   if(rank==nranks-1) iend=niters;
   if(nranks>niters) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
   
-  double *Y0_pre=new double[N*niters*nmulti];
-  double *Y0_at=new double[N*niters*nmulti];
-  double *Y0_aft=new double[N*niters*nmulti];
-  memset(Y0_pre,0,sizeof(double)*N*niters*nmulti);
-  memset(Y0_at,0,sizeof(double)*N*niters*nmulti);
-  memset(Y0_aft,0,sizeof(double)*N*niters*nmulti);
+  double *Y0_pre=new double[NCOL*niters*nmulti];
+  double *Y0_at=new double[NCOL*niters*nmulti];
+  double *Y0_aft=new double[NCOL*niters*nmulti];
+  memset(Y0_pre,0,sizeof(double)*NCOL*niters*nmulti);
+  memset(Y0_at,0,sizeof(double)*NCOL*niters*nmulti);
+  memset(Y0_aft,0,sizeof(double)*NCOL*niters*nmulti);
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
@@ -92,7 +96,7 @@ int main(int narg,char **arg)
 	{
 	  conf.P[i].setZero();
 	  if(i>=non_null_min_mom && i<non_null_max_mom)
-	    for(size_t a=0;a<ngen;a++) conf.P[i]+=generators[a]*get_real_rand_gauss(h/(N*N-1));
+	    for(size_t a=0;a<ngen;a++) conf.P[i]+=generators[a]*get_real_rand_gauss(h/(NCOL*NCOL-1));
 	}
       
       if(iiter>=istart &&iiter<iend)
@@ -123,7 +127,7 @@ int main(int narg,char **arg)
 	      
 	      //store the eigenvalues of Y0 before the transformation
 	      auto ei=es.compute(que_conf.X[nX]).eigenvalues();
-	      for(int i=0;i<N;i++) Y0_pre[i+N*(imulti+nmulti*iiter)]=ei(i);
+	      for(int i=0;i<NCOL;i++) Y0_pre[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
 	      
 	      //go to the base in which X0 is diagonal
 	      SelfAdjointEigenSolver<matr_t> es;
@@ -134,16 +138,16 @@ int main(int narg,char **arg)
 	      matr_t dX;
 	      dX.setZero();
 	      dX(0,0)=-eps;
-	      dX(N-1,N-1)=+eps;
+	      dX(NCOL-1,NCOL-1)=+eps;
 	      //define correction for P
 	      matr_t dP;
 	      dP.setZero();
-	      for(int i=1;i<N-1;i++)
+	      for(int i=1;i<NCOL-1;i++)
 		{
 		  dP(0,i)=-eps*que_conf.P[iX_pert](0,i)/(eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](i,i));
-		  dP(i,N-1)=-eps*que_conf.P[iX_pert](i,N-1)/(eps-que_conf.X[iX_pert](i,i)+que_conf.X[iX_pert](N-1,N-1));
+		  dP(i,NCOL-1)=-eps*que_conf.P[iX_pert](i,NCOL-1)/(eps-que_conf.X[iX_pert](i,i)+que_conf.X[iX_pert](NCOL-1,NCOL-1));
 		}
-	      dP(0,N-1)=-2*eps*que_conf.P[iX_pert](0,N-1)/(2*eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](N-1,N-1));
+	      dP(0,NCOL-1)=-2*eps*que_conf.P[iX_pert](0,NCOL-1)/(2*eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](NCOL-1,NCOL-1));
 	      dP=(dP+dP.adjoint()).eval();
 	      //make the transformation
 	      que_conf.X[iX_pert]+=dX;
@@ -151,7 +155,7 @@ int main(int narg,char **arg)
 	      
 	      //store the eigenvalues of Y0 at the transformation
 	      ei=es.compute(que_conf.X[nX]).eigenvalues();
-	      for(int i=0;i<N;i++) Y0_at[i+N*(imulti+nmulti*iiter)]=ei(i);
+	      for(int i=0;i<NCOL;i++) Y0_at[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
 	      
 	      //mark the trace to subtracty
 	      sq_X_trace_ref=que_conf.sq_X_trace();
@@ -160,7 +164,7 @@ int main(int narg,char **arg)
 	      evolver.integrate(que_conf,theory,meas_time,obs);
 	      //store the eigenvalues of Y0 after retermalization
 	      ei=es.compute(que_conf.X[nX]).eigenvalues();
-	      for(int i=0;i<N;i++) Y0_aft[i+N*(imulti+nmulti*iiter)]=ei(i);
+	      for(int i=0;i<NCOL;i++) Y0_aft[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
 	      
 	      //evlove unperturbed
 	      evolver.integrate(conf,theory,meas_time,fake_obs);
@@ -170,17 +174,17 @@ int main(int narg,char **arg)
 	}
     }
   
-  MPI_Allreduce(MPI_IN_PLACE,Y0_pre,N*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE,Y0_at,N*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  MPI_Allreduce(MPI_IN_PLACE,Y0_aft,N*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,Y0_pre,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,Y0_at,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE,Y0_aft,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   if(rank==0)
     {
       ofstream out_eig_Y0_pre("Y0_eigenvalues_prequench");
-      for(int i=0;i<niters*N*nmulti;i++) out_eig_Y0_pre<<Y0_pre[i]<<endl;
+      for(int i=0;i<niters*NCOL*nmulti;i++) out_eig_Y0_pre<<Y0_pre[i]<<endl;
       ofstream out_eig_Y0_at("Y0_eigenvalues_atquench");
-      for(int i=0;i<niters*N*nmulti;i++) out_eig_Y0_at<<Y0_at[i]<<endl;
+      for(int i=0;i<niters*NCOL*nmulti;i++) out_eig_Y0_at<<Y0_at[i]<<endl;
       ofstream out_eig_Y0_aft("Y0_eigenvalues_aftquenc");
-      for(int i=0;i<niters*N*nmulti;i++) out_eig_Y0_aft<<Y0_aft[i]<<endl;
+      for(int i=0;i<niters*NCOL*nmulti;i++) out_eig_Y0_aft<<Y0_aft[i]<<endl;
     }
   
   obs.write(base_out);

@@ -16,6 +16,15 @@ AC_PROG_CC
 AC_PROG_CXX
 AX_CXX_COMPILE_STDCXX_11(noext,mandatory)
 
+#number of colors
+AC_ARG_ENABLE(ncol,
+        AS_HELP_STRING([--enable-ncol=n],[Set number of colors [Default: 3]]),
+        ncol="${enableval}",
+        ncol=3)
+if ! printf "%f" "$col" >/dev/null 2>&1; then AC_MSG_ERROR([String $ncol is not a number]); fi
+AC_MSG_RESULT([enabling number of colors... $ncol])
+AC_DEFINE_UNQUOTED([NCOL],$ncol,[Number of colors])
+
 #check eigen
 AC_LANG_PUSH([C++])
 AC_CHECK_HEADERS([Eigen/Dense],,AC_MSG_ERROR([Error! Eigen required]))
