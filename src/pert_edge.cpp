@@ -113,8 +113,11 @@ int main(int narg,char **arg)
 	  else conf.read(path);
 	  
 	  int stored_time=conf.t;
+	  int stored_meas_time=conf.meas_t;
 	  for(int imulti=0;imulti<nmulti;imulti++)
 	    {
+	      cout<<"Imulti: "<<imulti+1<<"/"<<nmulti<<endl;
+	      
 	      //copy the configuration
 	      que_conf=conf;
 	      
@@ -162,6 +165,7 @@ int main(int narg,char **arg)
 	      //evlove unperturbed
 	      evolver.integrate(conf,theory,meas_time,fake_obs);
 	      conf.t=stored_time;
+	      conf.meas_t=stored_meas_time;
 	    }
 	}
     }
