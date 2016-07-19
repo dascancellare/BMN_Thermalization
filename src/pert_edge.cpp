@@ -36,6 +36,8 @@ int main(int narg,char **arg)
   MPI_Comm_size(MPI_COMM_WORLD,&nranks);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
   
+  cout<<"Compiled for NCOL="<<NCOL<<endl;
+  
   double seed;
   double dt;
   
