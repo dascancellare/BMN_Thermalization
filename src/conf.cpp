@@ -167,6 +167,12 @@ double conf_t::sq_Y_trace_ch2()
   return sq_Y_trace_weighted(coef);
 }
 
+double conf_t::sq_Y_trace_ch_extra()
+{return (X[3]*X[4]).trace().real();}
+
+double conf_t::sq_Y_trace_ch_modulo()
+{return std::norm(((X[3]+I*X[4])*(X[3]+I*X[4])).trace());}
+
 void conf_t::hermitianize()
 {
   for(int i=0;i<glb_N;i++)

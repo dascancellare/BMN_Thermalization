@@ -97,7 +97,10 @@ struct obs_pars_t
     ofstream sq_Y_trace_out(rank==0?(path+"sq_Y_trace"):"/dev/null");
     ofstream sq_Y_trace_ch1_out(rank==0?(path+"sq_Y_trace_ch1"):"/dev/null");
     ofstream sq_Y_trace_ch2_out(rank==0?(path+"sq_Y_trace_ch2"):"/dev/null");
+    ofstream sq_Y_trace_ch_extra_out(rank==0?(path+"sq_Y_trace_ch_extra"):"/dev/null");
+    ofstream sq_Y_trace_ch_modulo_out(rank==0?(path+"sq_Y_trace_ch_modulo"):"/dev/null");
     ofstream eig_x0_out(rank==0?(path+"eigenvalues_x0"):"/dev/null");
+    ofstream eig_x1_out(rank==0?(path+"eigenvalues_x1"):"/dev/null");
     // ofstream eig_x1_out(path+"eigenvalues_x1");
     // ofstream eig_y0_out(path+"eigenvalues_y0");
     ofstream L_out(rank==0?(path+"L"):"/dev/null");
@@ -116,9 +119,10 @@ struct obs_pars_t
     sq_Y_trace_out.precision(16);
     sq_Y_trace_ch1_out.precision(16);
     sq_Y_trace_ch2_out.precision(16);
+    sq_Y_trace_ch_extra_out.precision(16);
     trace_out.precision(16);
     eig_x0_out.precision(16);
-    // eig_x1_out.precision(16);
+    eig_x1_out.precision(16);
     // eig_y0_out.precision(16);
     L_out.precision(16);
     
@@ -132,11 +136,14 @@ struct obs_pars_t
     for(auto &x : sq_Y_trace) sq_Y_trace_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch1) sq_Y_trace_ch1_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch2) sq_Y_trace_ch2_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
+    for(auto &x : sq_Y_trace_ch_extra) sq_Y_trace_ch_extra_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : trace) trace_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(int i=0;i<NCOL;i++)
       {
 	for(auto &x : eig_x0) eig_x0_out<<x.first*meas_each<<" "<<x.second[i].ave_err_str()<<endl;
 	eig_x0_out<<"&"<<endl;
+	for(auto &x : eig_x1) eig_x1_out<<x.first*meas_each<<" "<<x.second[i].ave_err_str()<<endl;
+	eig_x1_out<<"&"<<endl;
       }
     //for(auto &x : eig_x1) eig_x1_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     //for(auto &x : eig_y0) eig_y0_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
@@ -161,9 +168,11 @@ private:
   map<int,obs_t> sq_Y_trace;
   map<int,obs_t> sq_Y_trace_ch1;
   map<int,obs_t> sq_Y_trace_ch2;
+  map<int,obs_t> sq_Y_trace_ch_extra;
+  map<int,obs_t> sq_Y_trace_ch_modulo;
   map<int,obs_t> trace;
   map<int,array<obs_t,NCOL> > eig_x0;
-  // map<int,array<obs_t,N> > eig_x1;
+  map<int,array<obs_t,NCOL> > eig_x1;
   // map<int,array<obs_t,N> > eig_y0;
   map<int,array<obs_t,nL> > L;
 };

@@ -86,6 +86,8 @@ struct conf_t
   double sq_Y_trace();
   double sq_Y_trace_ch1();
   double sq_Y_trace_ch2();
+  double sq_Y_trace_ch_extra();
+  double sq_Y_trace_ch_modulo();
   
   //! difference
   conf_t operator-(conf_t oth)
