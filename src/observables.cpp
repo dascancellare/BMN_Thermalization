@@ -37,6 +37,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   for(int i=0;i<NCOL;i++) eig_x0[it][i].add(ei0(i));
   auto ei1=eigenvalues(conf.X[1]);
   for(int i=0;i<NCOL;i++) eig_x1[it][i].add(ei1(i));
+  for(int i=0;i<NCOL;i++) eig_x01[it][i].add(ei0(i)*ei1(i));
   
   //angular momentum
   int nset=2,imin[2]={0,nX},imax[2]={nX,glb_N},ipair=0;
@@ -44,7 +45,4 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
     for(int i=imin[iset];i<imax[iset];i++)
       for(int j=i+1;j<imax[iset];j++)
 	L[it][ipair++].add(pow((conf.X[i]*conf.P[j]-conf.X[j]*conf.P[i]).trace().real(),2));
-  //eig_x0<<t<<" "<<<<endl;
-  // eig_x1<<t<<" "<<eigenvalues(conf.X[1])<<endl;
-  // eig_y0<<t<<" "<<eigenvalues(conf.X[nX])<<endl;
 }
