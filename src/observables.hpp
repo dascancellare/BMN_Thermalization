@@ -120,6 +120,7 @@ struct obs_pars_t
     sq_Y_trace_ch1_out.precision(16);
     sq_Y_trace_ch2_out.precision(16);
     sq_Y_trace_ch_extra_out.precision(16);
+    sq_Y_trace_ch_modulo_out.precision(16);
     trace_out.precision(16);
     eig_x0_out.precision(16);
     eig_x1_out.precision(16);
@@ -137,6 +138,7 @@ struct obs_pars_t
     for(auto &x : sq_Y_trace_ch1) sq_Y_trace_ch1_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch2) sq_Y_trace_ch2_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : sq_Y_trace_ch_extra) sq_Y_trace_ch_extra_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
+    for(auto &x : sq_Y_trace_ch_modulo) sq_Y_trace_ch_modulo_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(auto &x : trace) trace_out<<x.first*meas_each<<" "<<x.second.ave_err_str()<<endl;
     for(int i=0;i<NCOL;i++)
       {
