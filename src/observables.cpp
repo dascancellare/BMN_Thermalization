@@ -28,10 +28,12 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   sq_X_trace[it].add(temp);
   sq_X_trace_sub[it].add(temp-sq_X_trace_ref);
   sq_Y_trace[it].add(conf.sq_Y_trace());
+  sq_Ymom_trace[it].add(conf.sq_Ymom_trace());
   sq_Y_trace_ch1[it].add(conf.sq_Y_trace_ch1());
   sq_Y_trace_ch2[it].add(conf.sq_Y_trace_ch2());
   sq_Y_trace_ch_extra[it].add(conf.sq_Y_trace_ch_extra());
   sq_Y_trace_ch_modulo[it].add(conf.sq_Y_trace_ch_modulo());
+  sq_Ymom_trace_ch_modulo[it].add(conf.sq_Ymom_trace_ch_modulo());
   
   auto ei0=eigenvalues(conf.X[0]);
   for(int i=0;i<NCOL;i++) eig_x0[it][i].add(ei0(i));

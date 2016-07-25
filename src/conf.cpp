@@ -155,6 +155,14 @@ double conf_t::sq_Y_trace()
   return sq_Y_trace_weighted(coef);
 }
 
+double conf_t::sq_Ymom_trace()
+{
+  double out=0;
+  for(int i=nX;i<glb_N;i++) out+=trace_square(P[i]);
+  
+  return out;
+}
+
 double conf_t::sq_Y_trace_ch1()
 {
   double coef[6]={1,1,1,1,-2,-2};
@@ -172,6 +180,9 @@ double conf_t::sq_Y_trace_ch_extra()
 
 double conf_t::sq_Y_trace_ch_modulo()
 {return std::norm(((X[3]+I*X[4])*(X[3]+I*X[4])).trace());}
+
+double conf_t::sq_Ymom_trace_ch_modulo()
+{return std::norm(((P[3]+I*P[4])*(P[3]+I*P[4])).trace());}
 
 void conf_t::hermitianize()
 {
