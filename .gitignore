@@ -25,3 +25,4 @@ build_debug
 /src/garbage.cpp
 src/sol*
 /src/config.hpp.in
+/cosa_runna
