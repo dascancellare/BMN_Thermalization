@@ -13,12 +13,12 @@ namespace
   conf_t *transforming;
   conf_t *ref_fix;
   
-  void dist(int &npar,double *fuf,double &out,double *p,int flag)
-  {
-    vector<double> w(npar);
-    w.assign(p,p+npar);
-    out=-transforming->get_gauge_transformed(generate_sun(w)).get_norm_with(*ref_fix);
-  }
+  // void dist(int &npar,double *fuf,double &out,double *p,int flag)
+  // {
+  //   vector<double> w(npar);
+  //   w.assign(p,p+npar);
+  //   out=-transforming->get_gauge_transformed(generate_sun(w)).get_norm_with(*ref_fix);
+  // }
 }
 
 gauge_fix_pars_t::gauge_fix_pars_t(conf_t ref_conf) : ref_conf(ref_conf)
