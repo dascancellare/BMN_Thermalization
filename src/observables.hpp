@@ -65,8 +65,9 @@ struct obs_pars_t
   void write(string path="")
   {
     ener.print(path+"energy");
+    sq_Y_trace.print(path+"sq_Y_trace");
     sq_Y_trace_ch2.print(path+"sq_Y_trace_ch2");
-    sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
+    //sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
     sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
   }
   
