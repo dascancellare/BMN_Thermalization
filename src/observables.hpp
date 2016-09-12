@@ -66,6 +66,8 @@ struct obs_pars_t
   {
     ener.print(path+"energy");
     sq_Y_trace_ch2.print(path+"sq_Y_trace_ch2");
+    sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
+    sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
   }
   
   //perform all measurement
