@@ -23,41 +23,33 @@ theory_t theory;
 
 ////////// parameters //////////
 
+double dt;
+int seed;
+int niters;
+int iX_pert;
+double eps;
+double walltime;
+string base_out;
+double h;
 double therm_time;
 double meas_time;
+int non_null_min_mom;
+int non_null_max_mom;
 
-int main(int narg,char **arg)
+obs_pars_t obs;
+int nprocs,proc;
+int istart,iend;
+
+//timings used to sed nmulti
+double init_time;
+double init_meas_time;
+double cpu_therm_time;
+double avail_meas_time;
+
+void read_input(string path)
 {
-  if(narg<2) CRASH("Use %s input",arg[0]);
-  //init MPI
-  int nranks,rank;
-  MPI_Init(&narg,&arg);
-  MPI_Comm_size(MPI_COMM_WORLD,&nranks);
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  
-  double init_time=MPI_Wtime();
-  
-  cout<<"Compiled for NCOL="<<NCOL<<endl;
-  
-  double seed;
-  double dt;
-  
-  fill_generators();
-  gen.seed(seed);
-  
-  obs_pars_t obs;
-  obs_pars_t fake_obs;
-  
-  ifstream input(arg[1]);
-  double h;
-  int niters;
-  int iX_pert;
-  int non_null_min_mom;
-  int non_null_max_mom;
-  double eps;
-  double walltime;
-  string base_out;
-  if(!input.good()) CRASH("unable to open \"input\"");
+  ifstream input(path);
+  if(!input.good()) CRASH("unable to open \"%s\"",path.c_str());
   read(seed,input,"Seed");
   read(therm_time,input,"ThermTime");
   read(meas_time,input,"MeasTime");
@@ -71,29 +63,34 @@ int main(int narg,char **arg)
   read(non_null_min_mom,input,"NonNullMinMom");
   read(non_null_max_mom,input,"NonNullMaxMom");
   read(base_out,input,"BaseOut");
+}
+
+void init(int narg,char **arg)
+{
+  cout<<"Compiled for NCOL="<<NCOL<<endl;
   
-  int nper_node=max(1,niters/nranks);
-  int istart=min(rank*nper_node,niters);
-  int iend=min(istart+nper_node,niters);
-  if(rank==nranks-1) iend=niters;
-  if(niters%nranks) CRASH("Cannot work with %d ranks and %d iters",nranks,niters);
+  //init MPI
+  MPI_Init(&narg,&arg);
+  MPI_Comm_size(MPI_COMM_WORLD,&nprocs);
+  MPI_Comm_rank(MPI_COMM_WORLD,&proc);
+  init_time=MPI_Wtime();
   
-  int nmulti=1;
-  
-  // double *Y0_pre=new double[NCOL*niters*nmulti];
-  // double *Y0_at=new double[NCOL*niters*nmulti];
-  // double *Y0_aft=new double[NCOL*niters*nmulti];
-  // memset(Y0_pre,0,sizeof(double)*NCOL*niters*nmulti);
-  // memset(Y0_at,0,sizeof(double)*NCOL*niters*nmulti);
-  // memset(Y0_aft,0,sizeof(double)*NCOL*niters*nmulti);
-  vector<conf_t> conf(niters);
-  update_t evolver(dt);
-  
+  fill_generators();
+  gen.seed(seed);
+  //set the range of configurations relative to the proc
+  int nper_node=max(1,niters/nprocs);
+  istart=min(proc*nper_node,niters);
+  iend=min(istart+nper_node,niters);
+  if(proc==nprocs-1) iend=niters;
+  if(niters%nprocs) CRASH("Cannot work with %d procs and %d iters",nprocs,niters);
+}
+
+void thermalize_or_load(vector<conf_t> &conf,update_t &evolver)
+{
   for(int iiter=0;iiter<niters;iiter++)
     {
       //generate initial conf
       conf[iiter].meas_t=-100000*obs.meas_each;
-      cout<<conf[iiter].t<<endl;
       const size_t ngen=generators.size();
       for(auto &X : conf[iiter].X) X.setZero();
       for(int i=0;i<glb_N;i++)
@@ -106,7 +103,7 @@ int main(int narg,char **arg)
       if(iiter>=istart &&iiter<iend)
 	{
 	  ///////////////////   init   //////////////////////
-	  cout<<"Rank "<<rank<<", Iter "<<iiter+1<<"/"<<niters<<endl;
+	  cout<<"Proc "<<proc<<", Iter "<<iiter+1<<"/"<<niters<<endl;
 	  
 	  ////////////////// thermalize /////////////////////
 	  
@@ -121,56 +118,96 @@ int main(int narg,char **arg)
 	}
     }
   
-  double init_meas_time=MPI_Wtime();
-  double therm_time=init_meas_time-init_time;
-  double avail_meas_time=walltime-therm_time;
+  //take note of all time
+  init_meas_time=MPI_Wtime();
+  cpu_therm_time=init_meas_time-init_time;
+  avail_meas_time=walltime-therm_time;
+}
+
+conf_t perturb(conf_t que_conf)
+{
+  //store the eigenvalues of Y0 before the transformation
+  // auto ei=es.compute(que_conf.X[nX]).eigenvalues();
+  // for(int i=0;i<NCOL;i++) Y0_pre[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
+  
+  //go to the base in which X0 is diagonal
+  SelfAdjointEigenSolver<matr_t> es;
+  que_conf.gauge_transf(es.compute(que_conf.X[iX_pert]).eigenvectors());
+  
+  //shift the largest eigenvalue
+  //define correction for X
+  matr_t dX;
+  dX.setZero();
+  dX(0,0)=-eps;
+  dX(NCOL-1,NCOL-1)=+eps;
+  //define correction for P
+  matr_t dP;
+  dP.setZero();
+  for(int i=1;i<NCOL-1;i++)
+    {
+      dP(0,i)=-eps*que_conf.P[iX_pert](0,i)/(eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](i,i));
+      dP(i,NCOL-1)=-eps*que_conf.P[iX_pert](i,NCOL-1)/(eps-que_conf.X[iX_pert](i,i)+que_conf.X[iX_pert](NCOL-1,NCOL-1));
+    }
+  dP(0,NCOL-1)=-2*eps*que_conf.P[iX_pert](0,NCOL-1)/(2*eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](NCOL-1,NCOL-1));
+  dP=(dP+dP.adjoint()).eval();
+  //make the transformation
+  que_conf.X[iX_pert]+=dX;
+  que_conf.P[iX_pert]+=dP;
+  
+  //store the eigenvalues of Y0 at the transformation
+  // ei=es.compute(que_conf.X[nX]).eigenvalues();
+  // for(int i=0;i<NCOL;i++) Y0_at[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
+  
+  return que_conf;
+}
+
+int update_nmulti(int nmulti,int imulti)
+{
+  double curr_meas_time=MPI_Wtime();
+  double used_meas_time=curr_meas_time-init_meas_time;
+  double time_per_multi=used_meas_time/imulti;
+  if(proc==0) cout<<"Time per multi: "<<time_per_multi<<", Time available for meas: "<<avail_meas_time<<", Nmulti "<<nmulti;
+  nmulti=avail_meas_time/time_per_multi*0.9;
+  MPI_Bcast(&nmulti,1,MPI_INT,0,MPI_COMM_WORLD);
+  if(proc==0) cout<<"-> "<<nmulti<<endl;
+  
+  return nmulti;
+}
+
+int main(int narg,char **arg)
+{
+  if(narg<2) CRASH("Use %s input",arg[0]);
+  
+  read_input(arg[1]);
+  init(narg,arg);
+  
+  int nmulti=1;
+  
+  // double *Y0_pre=new double[NCOL*niters*nmulti];
+  // double *Y0_at=new double[NCOL*niters*nmulti];
+  // double *Y0_aft=new double[NCOL*niters*nmulti];
+  // memset(Y0_pre,0,sizeof(double)*NCOL*niters*nmulti);
+  // memset(Y0_at,0,sizeof(double)*NCOL*niters*nmulti);
+  // memset(Y0_aft,0,sizeof(double)*NCOL*niters*nmulti);
+  
+  //perform thermalization
+  vector<conf_t> conf(niters);
+  update_t evolver(dt);
+  thermalize_or_load(conf,evolver);
   
   for(int imulti=1;imulti<=nmulti;imulti++)
     {
-      if(rank==0) cout<<"Imulti: "<<imulti<<"/"<<nmulti<<endl;
+      //write info on where we arrived
+      if(proc==0) cout<<"Imulti: "<<imulti<<"/"<<nmulti<<endl;
       
       for(int iiter=istart;iiter<iend;iiter++)
 	{
-	  //copy the configuration
-	  conf_t que_conf=conf[iiter];
-	  
-	  //store the eigenvalues of Y0 before the transformation
-	  // auto ei=es.compute(que_conf.X[nX]).eigenvalues();
-	  // for(int i=0;i<NCOL;i++) Y0_pre[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
-	  
-	  //go to the base in which X0 is diagonal
-	  SelfAdjointEigenSolver<matr_t> es;
-	  que_conf.gauge_transf(es.compute(que_conf.X[iX_pert]).eigenvectors());
-	  
-	  //shift the largest eigenvalue
-	  //define correction for X
-	  matr_t dX;
-	  dX.setZero();
-	  dX(0,0)=-eps;
-	  dX(NCOL-1,NCOL-1)=+eps;
-	  //define correction for P
-	  matr_t dP;
-	  dP.setZero();
-	  for(int i=1;i<NCOL-1;i++)
-	    {
-	      dP(0,i)=-eps*que_conf.P[iX_pert](0,i)/(eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](i,i));
-	      dP(i,NCOL-1)=-eps*que_conf.P[iX_pert](i,NCOL-1)/(eps-que_conf.X[iX_pert](i,i)+que_conf.X[iX_pert](NCOL-1,NCOL-1));
-	    }
-	  dP(0,NCOL-1)=-2*eps*que_conf.P[iX_pert](0,NCOL-1)/(2*eps-que_conf.X[iX_pert](0,0)+que_conf.X[iX_pert](NCOL-1,NCOL-1));
-	  dP=(dP+dP.adjoint()).eval();
-	  //make the transformation
-	  que_conf.X[iX_pert]+=dX;
-	  que_conf.P[iX_pert]+=dP;
-	  
-	  //store the eigenvalues of Y0 at the transformation
-	  // ei=es.compute(que_conf.X[nX]).eigenvalues();
-	  // for(int i=0;i<NCOL;i++) Y0_at[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
-	  
-	  //mark the trace to subtracty
-	  sq_X_trace_ref=que_conf.sq_X_trace();
+	  //quench the configuration
+	  conf_t que_conf=perturb(conf[iiter]);
 	  
 	  //evolve perturbed
 	  evolver.integrate(que_conf,theory,meas_time,obs);
+	  
 	  //store the eigenvalues of Y0 after retermalization
 	  // ei=es.compute(que_conf.X[nX]).eigenvalues();
 	  // for(int i=0;i<NCOL;i++) Y0_aft[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
@@ -178,24 +215,19 @@ int main(int narg,char **arg)
 	  //evlove unperturbed
 	  double stored_time=conf[iiter].t;
 	  double stored_meas_time=conf[iiter].meas_t;
-	  evolver.integrate(conf[iiter],theory,meas_time,fake_obs);
+	  evolver.integrate(conf[iiter],theory,meas_time);
 	  conf[iiter].t=stored_time;
 	  conf[iiter].meas_t=stored_meas_time;
 	}
       
-      double curr_meas_time=MPI_Wtime();
-      double used_meas_time=curr_meas_time-init_meas_time;
-      double time_per_multi=used_meas_time/imulti;
-      if(rank==0) cout<<"Time per multi: "<<time_per_multi<<", Time available for meas: "<<avail_meas_time<<", Nmulti "<<nmulti;
-      nmulti=avail_meas_time/time_per_multi*0.9;
-      MPI_Bcast(&nmulti,1,MPI_INT,0,MPI_COMM_WORLD);
-      if(rank==0) cout<<"-> "<<nmulti<<endl;
+      //update the number of multi
+      nmulti=update_nmulti(nmulti,imulti);
     }
   
   // MPI_Allreduce(MPI_IN_PLACE,Y0_pre,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   // MPI_Allreduce(MPI_IN_PLACE,Y0_at,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
   // MPI_Allreduce(MPI_IN_PLACE,Y0_aft,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
-  // if(rank==0)
+  // if(proc==0)
   //   {
   //     ofstream out_eig_Y0_pre("Y0_eigenvalues_prequench");
   //     for(int i=0;i<niters*NCOL*nmulti;i++) out_eig_Y0_pre<<Y0_pre[i]<<endl;

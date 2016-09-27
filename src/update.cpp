@@ -69,3 +69,6 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
       conf.meas_t=conf.t+obs.meas_each;
     }
 }
+
+void update_t::integrate(conf_t &conf,theory_t &theory,double DT)
+{for(int it=0;it<DT/dt;it++) conf.t+=update(conf,theory,conf.t);}

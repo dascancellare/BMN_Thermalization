@@ -27,6 +27,9 @@ struct update_t
   
   //! integrate and measure
   void integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs);
+  
+  //! integrate only
+  void integrate(conf_t &conf,theory_t &theory,double DT);
 private:
   //! update the positions on the base of momenta
   void update_positions(conf_t &conf,double step);

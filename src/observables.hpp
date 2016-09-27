@@ -18,8 +18,6 @@
 
 using namespace std;
 
-EXTERN_OBSERVABLES double sq_X_trace_ref INIT_TO(0);
-
 const int nL=(nX*(nX-1))/2+((glb_N-nX)*((glb_N-nX)-1))/2;
 
 struct obs_t : pair<int,double>
