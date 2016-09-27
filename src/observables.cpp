@@ -48,3 +48,72 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   //     for(int j=i+1;j<imax[iset];j++)
   // 	L[it][ipair++].add(pow((conf.X[i]*conf.P[j]-conf.X[j]*conf.P[i]).trace().real(),2));
 }
+
+double conf_t::kinetic_energy_trace()
+{
+  double K=0;
+  for(int i=0;i<glb_N;i++) K+=square(P[i].trace().real())/NCOL;
+  K/=2;
+  
+  return K;
+}
+
+double conf_t::kinetic_energy()
+{
+  double K=0;
+  for(int i=0;i<glb_N;i++) K+=trace_square(P[i]);
+  K/=2;
+  
+  return K;
+}
+
+double conf_t::sq_X_trace()
+{
+  double S=0;
+  for(int i=0;i<nX;i++) S+=trace_square(X[i]);
+  
+  return S;
+}
+
+double conf_t::sq_Y_trace_weighted(double *coef)
+{
+  double S=0;
+  for(int i=nX;i<glb_N;i++) S+=coef[i-nX]*trace_square(X[i]);
+  
+  return S;
+}
+
+double conf_t::sq_Y_trace()
+{
+  double coef[6]={1,1,1,1,1,1};
+  return sq_Y_trace_weighted(coef);
+}
+
+double conf_t::sq_Ymom_trace()
+{
+  double out=0;
+  for(int i=nX;i<glb_N;i++) out+=trace_square(P[i]);
+  
+  return out;
+}
+
+double conf_t::sq_Y_trace_ch1()
+{
+  double coef[6]={1,1,1,1,-2,-2};
+  return sq_Y_trace_weighted(coef);
+}
+
+double conf_t::sq_Y_trace_ch2()
+{
+  double coef[6]={1,1,-1,-1,0,0};
+  return sq_Y_trace_weighted(coef);
+}
+
+double conf_t::sq_Y_trace_ch_extra()
+{return (X[3]*X[4]).trace().real();}
+
+double conf_t::sq_Y_trace_ch_modulo()
+{return std::norm(((X[3]+I*X[4])*(X[3]+I*X[4])).trace());}
+
+double conf_t::sq_Ymom_trace_ch_modulo()
+{return std::norm(((P[3]+I*P[4])*(P[3]+I*P[4])).trace());}
