@@ -12,3 +12,7 @@ common_sources= \
 
 bin_PROGRAMS= \
 	$(top_builddir)/bin/pert_edge
+
+__top_builddir__bin_pert_edge_SOURCES= \
+	$(common_sources) \
+        src/pert_edge.cpp
