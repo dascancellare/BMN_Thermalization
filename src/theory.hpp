@@ -9,9 +9,6 @@ struct theory_t
   bool pert; //!< flag for perturbation
   double c1,c2; //!< gaussian coefficient of perturbation
   
-  //! mass squared(depending on time)
-  inline double sqm(double t) {return mass*mass;}
-  
   //! compute the force
   void get_force(vector<matr_t> &F,conf_t &conf,double t);
   

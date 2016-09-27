@@ -23,14 +23,16 @@ double theory_t::mass_potential(vector<matr_t> &X,double t)
   double V=0;
   
   //potential X
-  for(int i=0;i<nX;i++) V+=sqm(t)*(trace_square(X[i])+
-				   2.0*(I*X[i]*comm(X[(i+1)%nX],X[(i+2)%nX])).trace().real());
+  for(int i=0;i<nX;i++)
+    V+=
+      mass2*trace_square(X[i])/2+
+      mass*(I*X[i]*comm(X[(i+1)%nX],X[(i+2)%nX])).trace().real());
   
   //potential Y
-  for(int a=nX;a<glb_N;a++) V+=sqm(t)*trace_square(X[a])/4;
+  for(int a=nX;a<glb_N;a++) V+=mass2*trace_square(X[a])/8;
   
   //see ref arXiv:0306054 their -m/3 in (21) is our m in agreement with (1) of 1104.5469
-  return V/2;
+  return V;
 }
 
 double theory_t::common_potential(vector<matr_t> &X)

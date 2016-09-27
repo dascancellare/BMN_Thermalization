@@ -19,7 +19,6 @@
 
 #include <mpi.h>
 
-init_setup_pars_t init_pars;
 theory_t theory;
 
 ////////// parameters //////////
