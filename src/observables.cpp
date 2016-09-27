@@ -49,6 +49,16 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   // 	L[it][ipair++].add(pow((conf.X[i]*conf.P[j]-conf.X[j]*conf.P[i]).trace().real(),2));
 }
 
+double theory_t::constraint(conf_t &conf)
+{
+  matr_t C;
+  C.setZero();
+  
+  for(int i=0;i<glb_N;i++) C+=comm(conf.X[i],conf.P[i]);
+  
+  return trace_square(C);
+}
+
 double conf_t::kinetic_energy_trace()
 {
   double K=0;

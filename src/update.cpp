@@ -43,11 +43,10 @@ double update_t::update(conf_t &conf,theory_t &theory,double t)
   return dt;
 }
 
-void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs,gauge_fix_pars_t *gauge_fixer)
+void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs)
 {
   //compute number of steps needed to integrate
   int nt=DT/dt;
-  //cout<<"Number of integration steps: "<<nt<<" to integrate "<<DT<<" in steps of "<<dt<<endl;
   
   for(int it=0;it<nt;it++)
     {
@@ -61,25 +60,6 @@ void update_t::integrate(conf_t &conf,theory_t &theory,double DT,obs_pars_t &obs
       //update
       double ret=update(conf,theory,conf.t);
       conf.t+=ret;
-      
-      //subtract the trace
-      if(0)
-      for(int i=0;i<glb_N;i++)
-	{
-	  complex<double> tr;
-	  tr=conf.X[i].trace()*(1.0/NCOL);
-	  for(int ic=0;ic<NCOL;ic++) conf.X[i](ic,ic)-=tr;
-	  tr=conf.P[i].trace()*(1.0/NCOL);
-	  for(int ic=0;ic<NCOL;ic++) conf.P[i](ic,ic)-=tr;
-	}
-      
-      //fix the gauge if needed
-      if(gauge_fixer)
-	{
-	  double diff=gauge_fixer->fix(conf);
-	  gauge_fixer->ref_conf=conf;
-	  cerr<<conf.t<<" "<<diff<<" "<<gauge_fixer->get_pars()[0]<<endl;
-	}
     }
   
   //last meas

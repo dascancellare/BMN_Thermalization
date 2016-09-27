@@ -29,7 +29,7 @@ typedef Matrix<complex<double>,NCOL,NCOL> matr_t;
 /////////////////////////////////////// globals ///////////////////////////////
 
 //! imaginary unit
-extern complex<double> I;
+#define I complex<double>(0.0,1.0)
 
 //! generators
 EXTERN_MATR vector<matr_t> generators;
@@ -38,9 +38,6 @@ EXTERN_MATR vector<matr_t> generators;
 
 //! fill the generators of SU(N)
 void fill_generators();
-
-//! define the matrices of su(2) representation of dimension j
-vector<Matrix<complex<double>,Dynamic,Dynamic> > generate_L(int dimrep);
 
 ///////////////////////////////////// templates ////////////////////////////////
 
