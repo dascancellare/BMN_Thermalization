@@ -58,7 +58,7 @@ struct obs_pars_t
 {
   double meas_each;  //!< interval between measurement
   
-  obs_pars_t(double meas_each=0.1) : meas_each(meas_each) {}
+  obs_pars_t(double meas_each) : meas_each(meas_each) {}
   
   void write(string path="")
   {

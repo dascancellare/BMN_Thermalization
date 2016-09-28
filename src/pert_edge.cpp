@@ -36,7 +36,7 @@ double meas_time;
 int non_null_min_mom;
 int non_null_max_mom;
 
-obs_pars_t obs(0.05);
+obs_pars_t obs(0.1);
 int nmulti=1;
 int nprocs,proc;
 int istart,iend;
