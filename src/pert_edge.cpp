@@ -141,7 +141,7 @@ conf_t perturb(conf_t que_conf)
   SelfAdjointEigenSolver<matr_t> es;
   que_conf.gauge_transf(es.compute(que_conf.X[iX_pert]).eigenvectors());
   
-#if 1
+#if 0
   
   //shift the largest eigenvalue
   //define correction for X

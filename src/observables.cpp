@@ -22,7 +22,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   // common_pot[it].add(theory.common_potential(conf.X));
   // mass_pot[it].add(theory.mass_potential(conf.X,t));
   ener[it].add(theory.hamiltonian(conf,t));
-  // constraint[it].add(theory.constraint(conf));
+  constraint[it].add(theory.constraint(conf));
   // trace[it].add(conf.X[0].trace().real());
   // double temp=conf.sq_X_trace();
   // sq_X_trace[it].add(temp);
