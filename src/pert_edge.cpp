@@ -31,12 +31,13 @@ double eps;
 double walltime;
 string base_out;
 double h;
-double therm_time;
+double evol_therm_time;
 double meas_time;
 int non_null_min_mom;
 int non_null_max_mom;
 
 obs_pars_t obs;
+int nmulti=1;
 int nprocs,proc;
 int istart,iend;
 
@@ -51,12 +52,13 @@ void read_input(string path)
   ifstream input(path);
   if(!input.good()) CRASH("unable to open \"%s\"",path.c_str());
   read(seed,input,"Seed");
-  read(therm_time,input,"ThermTime");
+  read(evol_therm_time,input,"ThermTime");
   read(meas_time,input,"MeasTime");
   read(dt,input,"dt");
   read(theory.mass,input,"Mass");
   read(niters,input,"NIters");
   read(walltime,input,"Walltime");
+  if(walltime<0) read(nmulti,input,"NMulti");
   read(h,input,"h");
   read(eps,input,"Eps");
   read(iX_pert,input,"iXPert");
@@ -111,17 +113,22 @@ void thermalize_or_load(vector<conf_t> &conf,update_t &evolver)
 	  string path=combine("conf_%d",iiter);
 	  if(!file_exists(path))
 	    {
-	      evolver.integrate(conf[iiter],theory,therm_time,obs);
+	      cout<<"File "<<path<<"does not exists, creating it"<<endl;
+	      evolver.integrate(conf[iiter],theory,evol_therm_time,obs);
 	      conf[iiter].write(path);
 	    }
-	  else conf[iiter].read(path);
+	  else
+	    {
+	      cout<<"File "<<path<<" exists, loading it"<<endl;
+	      conf[iiter].read(path);
+	    }
 	}
     }
   
   //take note of all time
   init_meas_time=MPI_Wtime();
   cpu_therm_time=init_meas_time-init_time;
-  avail_meas_time=walltime-therm_time;
+  avail_meas_time=walltime-cpu_therm_time;
 }
 
 conf_t perturb(conf_t que_conf)
@@ -133,6 +140,8 @@ conf_t perturb(conf_t que_conf)
   //go to the base in which X0 is diagonal
   SelfAdjointEigenSolver<matr_t> es;
   que_conf.gauge_transf(es.compute(que_conf.X[iX_pert]).eigenvectors());
+  
+#if 1
   
   //shift the largest eigenvalue
   //define correction for X
@@ -154,6 +163,13 @@ conf_t perturb(conf_t que_conf)
   que_conf.X[iX_pert]+=dX;
   que_conf.P[iX_pert]+=dP;
   
+#else
+  
+  que_conf.X[iX_pert]*=(1+eps);
+  que_conf.P[iX_pert]*=1.0/(1+eps);
+  
+#endif
+  
   //store the eigenvalues of Y0 at the transformation
   // ei=es.compute(que_conf.X[nX]).eigenvalues();
   // for(int i=0;i<NCOL;i++) Y0_at[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
@@ -161,17 +177,18 @@ conf_t perturb(conf_t que_conf)
   return que_conf;
 }
 
-int update_nmulti(int nmulti,int imulti)
+void update_nmulti(int imulti)
 {
-  double curr_meas_time=MPI_Wtime();
-  double used_meas_time=curr_meas_time-init_meas_time;
-  double time_per_multi=used_meas_time/imulti;
-  if(proc==0) cout<<"Time per multi: "<<time_per_multi<<", Time available for meas: "<<avail_meas_time<<", Nmulti "<<nmulti;
-  nmulti=avail_meas_time/time_per_multi*0.9;
-  MPI_Bcast(&nmulti,1,MPI_INT,0,MPI_COMM_WORLD);
-  if(proc==0) cout<<"-> "<<nmulti<<endl;
-  
-  return nmulti;
+  if(walltime>0)
+    {
+      double curr_meas_time=MPI_Wtime();
+      double used_meas_time=curr_meas_time-init_meas_time;
+      double time_per_multi=used_meas_time/imulti;
+      if(proc==0) cout<<"Time per multi: "<<time_per_multi<<", Time available for meas: "<<avail_meas_time<<", Nmulti "<<nmulti;
+      nmulti=avail_meas_time/time_per_multi*0.9;
+      MPI_Bcast(&nmulti,1,MPI_INT,0,MPI_COMM_WORLD);
+      if(proc==0) cout<<"-> "<<nmulti<<endl;
+    }
 }
 
 int main(int narg,char **arg)
@@ -180,8 +197,6 @@ int main(int narg,char **arg)
   
   read_input(arg[1]);
   init(narg,arg);
-  
-  int nmulti=1;
   
   // double *Y0_pre=new double[NCOL*niters*nmulti];
   // double *Y0_at=new double[NCOL*niters*nmulti];
@@ -221,7 +236,7 @@ int main(int narg,char **arg)
 	}
       
       //update the number of multi
-      nmulti=update_nmulti(nmulti,imulti);
+      update_nmulti(imulti);
     }
   
   // MPI_Allreduce(MPI_IN_PLACE,Y0_pre,NCOL*niters*nmulti,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);
