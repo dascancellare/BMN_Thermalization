@@ -68,7 +68,7 @@ struct obs_pars_t
     //sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
     sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
     constraint.print(path+"constraint");
-    for(int iL=0;iL<nL;iL++) L[iL].print(path+"_L_"+to_string(iL));
+    //for(int iL=0;iL<nL;iL++) L[iL].print(path+"L_"+to_string(iL));
   }
   
   //perform all measurement
