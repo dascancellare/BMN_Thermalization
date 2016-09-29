@@ -137,11 +137,11 @@ conf_t perturb(conf_t que_conf)
   // auto ei=es.compute(que_conf.X[nX]).eigenvalues();
   // for(int i=0;i<NCOL;i++) Y0_pre[i+NCOL*(imulti+nmulti*iiter)]=ei(i);
   
+#if 0
+  
   //go to the base in which X0 is diagonal
   SelfAdjointEigenSolver<matr_t> es;
   que_conf.gauge_transf(es.compute(que_conf.X[iX_pert]).eigenvectors());
-  
-#if 0
   
   //shift the largest eigenvalue
   //define correction for X
