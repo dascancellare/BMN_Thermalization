@@ -65,6 +65,10 @@ template <class T> T square(T a)
 template <typename D> double trace_square(const MatrixBase<D> &M)
 {return (M*M).trace().real();}
 
+//! return the norm2 of the matrix
+template <typename D> double trace_norm2(const MatrixBase<D> &M)
+{return (M*M.adjoint()).trace().real();}
+
 //! check that glb_N has been fixed
 inline void check_gln_N_set()
 {if(glb_N<0) CRASH("please init glb_N before");}

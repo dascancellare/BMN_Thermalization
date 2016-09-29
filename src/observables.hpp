@@ -68,6 +68,7 @@ struct obs_pars_t
     //sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
     sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
     constraint.print(path+"constraint");
+    for(int iL=0;iL<nL;iL++) L[iL].print(path+"_L_"+to_string(iL));
   }
   
   //perform all measurement
@@ -93,7 +94,7 @@ private:
   // map<int,array<obs_t,NCOL> > eig_x1;
   // map<int,array<obs_t,NCOL> > eig_x01;
   // map<int,array<obs_t,N> > eig_y0;
-  // map<int,array<obs_t,nL> > L;
+  array<obs_vec_t,nL> L;
 };
 
 #undef EXTERN_OBSERVABLES

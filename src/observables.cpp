@@ -41,12 +41,12 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   // for(int i=0;i<NCOL;i++) eig_x1[it][i].add(ei1(i));
   // for(int i=0;i<NCOL;i++) eig_x01[it][i].add(ei0(i)*ei1(i));
   
-  // //angular momentum
-  // int nset=2,imin[2]={0,nX},imax[2]={nX,glb_N},ipair=0;
-  // for(int iset=0;iset<nset;iset++)
-  //   for(int i=imin[iset];i<imax[iset];i++)
-  //     for(int j=i+1;j<imax[iset];j++)
-  // 	L[it][ipair++].add(pow((conf.X[i]*conf.P[j]-conf.X[j]*conf.P[i]).trace().real(),2));
+  //angular momentum
+  int nset=2,imin[2]={0,nX},imax[2]={nX,glb_N},ipair=0;
+  for(int iset=0;iset<nset;iset++)
+    for(int i=imin[iset];i<imax[iset];i++)
+      for(int j=i+1;j<imax[iset];j++)
+  	L[ipair++][it].add(pow((conf.X[i]*conf.P[j]-conf.X[j]*conf.P[i]).trace().real(),2));
 }
 
 double theory_t::constraint(conf_t &conf)
@@ -56,7 +56,7 @@ double theory_t::constraint(conf_t &conf)
   
   for(int i=0;i<glb_N;i++) C+=comm(conf.X[i],conf.P[i]);
   
-  return trace_square(C);
+  return trace_norm2(C);
 }
 
 double conf_t::kinetic_energy_trace()
