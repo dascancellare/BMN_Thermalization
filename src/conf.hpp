@@ -55,12 +55,14 @@ struct conf_t
   
   //! compute the summ of the trace of the squares of all Y
   double sq_Y_trace_weighted(double *coef);
+  double sq_PY_trace_weighted(double *coef);
   double fo_Y_trace_weighted(double *coef);
   double fo_Y_trace();
   double sq_Y_trace();
   double sq_Ymom_trace();
   double sq_Y_trace_ch1();
   double sq_Y_trace_ch2();
+  double sq_PY_trace_ch2();
   double sq_Y_trace_ch_extra();
   double sq_Y_trace_ch_modulo();
   double sq_Ymom_trace_ch_modulo();

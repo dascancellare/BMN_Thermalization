@@ -66,6 +66,7 @@ struct obs_pars_t
     sq_Y_trace.print(path+"sq_Y_trace");
     fo_Y_trace.print(path+"fo_Y_trace");
     sq_Y_trace_ch2.print(path+"sq_Y_trace_ch2");
+    sq_PY_trace_ch2.print(path+"sq_PY_trace_ch2");
     //sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
     sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
     constraint.print(path+"constraint");
@@ -88,6 +89,7 @@ private:
   obs_vec_t sq_Ymom_trace;
   obs_vec_t sq_Y_trace_ch1;
   obs_vec_t sq_Y_trace_ch2;
+  obs_vec_t sq_PY_trace_ch2;
   obs_vec_t sq_Y_trace_ch_extra;
   obs_vec_t sq_Y_trace_ch_modulo;
   obs_vec_t sq_Ymom_trace_ch_modulo;

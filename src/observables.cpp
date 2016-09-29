@@ -32,6 +32,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   // sq_Ymom_trace[it].add(conf.sq_Ymom_trace());
   // sq_Y_trace_ch1[it].add(conf.sq_Y_trace_ch1());
   sq_Y_trace_ch2[it].add(conf.sq_Y_trace_ch2());
+  sq_PY_trace_ch2[it].add(conf.sq_PY_trace_ch2());
   //sq_Y_trace_ch_extra[it].add(conf.sq_Y_trace_ch_extra());
   sq_Y_trace_ch_modulo[it].add(conf.sq_Y_trace_ch_modulo());
   // sq_Ymom_trace_ch_modulo[it].add(conf.sq_Ymom_trace_ch_modulo());
@@ -94,6 +95,14 @@ double conf_t::sq_Y_trace_weighted(double *coef)
   return S;
 }
 
+double conf_t::sq_PY_trace_weighted(double *coef)
+{
+  double S=0;
+  for(int i=nX;i<glb_N;i++) S+=coef[i-nX]*(X[i]*P[i]).trace().real();
+  
+  return S;
+}
+
 double conf_t::fo_Y_trace_weighted(double *coef)
 {
   double S=0;
@@ -132,6 +141,12 @@ double conf_t::sq_Y_trace_ch2()
 {
   double coef[6]={1,1,-1,-1,0,0};
   return sq_Y_trace_weighted(coef);
+}
+
+double conf_t::sq_PY_trace_ch2()
+{
+  double coef[6]={1,1,-1,-1,0,0};
+  return sq_PY_trace_weighted(coef);
 }
 
 double conf_t::sq_Y_trace_ch_extra()
