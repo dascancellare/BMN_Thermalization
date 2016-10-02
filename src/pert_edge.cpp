@@ -110,7 +110,9 @@ void thermalize_or_load(vector<conf_t> &conf,update_t &evolver)
 	  ////////////////// thermalize /////////////////////
 	  
 	  //set the evolver and evolve
-	  string path=combine("conf_%d",iiter);
+	  cout<<dir_exists("conf")<<endl;
+	  string path=combine("conf%s%d",(dir_exists("conf")?"/":"_"),iiter);
+	  
 	  if(!file_exists(path))
 	    {
 	      cout<<"File "<<path<<"does not exists, creating it"<<endl;

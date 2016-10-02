@@ -21,5 +21,6 @@ template <class T> void read(T &out,ifstream &in,string is)
 }
 
 int file_exists(string path);
+int dir_exists(string path);
 
 #endif

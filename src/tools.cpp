@@ -6,6 +6,9 @@
 #include <cstdio>
 #include <iostream>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 using namespace std;
 
 void internal_crash(int line,const char *file,const char *temp,...)
@@ -48,4 +51,13 @@ int file_exists(string path)
   else status=0;
   
   return status;
+}
+
+//check if a directoy exists
+int dir_exists(string path)
+{
+  struct stat info;
+  int rc=stat(path.c_str(),&info);
+  int is=(info.st_mode&S_IFDIR);
+  return (rc==0)&&is;
 }
