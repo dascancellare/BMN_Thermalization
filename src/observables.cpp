@@ -18,8 +18,8 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   
   //CRASH("asking to measure it=%d but only %lu possible",it,kin_ener.size());
   
-  // kin_ener[it].add(conf.kinetic_energy()-conf.kinetic_energy_trace());
-  // common_pot[it].add(theory.common_potential(conf.X));
+  kin_ener[it].add(conf.kinetic_energy()-conf.kinetic_energy_trace());
+  common_pot[it].add(theory.common_potential(conf.X));
   // mass_pot[it].add(theory.mass_potential(conf.X,t));
   ener[it].add(theory.hamiltonian(conf,t));
   constraint[it].add(theory.constraint(conf));
@@ -28,11 +28,11 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   // sq_X_trace[it].add(temp);
   // sq_X_trace_sub[it].add(temp-sq_X_trace_ref);
   sq_Y_trace[it].add(conf.sq_Y_trace());
-  fo_Y_trace[it].add(conf.fo_Y_trace());
+  //fo_Y_trace[it].add(conf.fo_Y_trace());
   // sq_Ymom_trace[it].add(conf.sq_Ymom_trace());
   // sq_Y_trace_ch1[it].add(conf.sq_Y_trace_ch1());
   sq_Y_trace_ch2[it].add(conf.sq_Y_trace_ch2());
-  sq_PY_trace_ch2[it].add(conf.sq_PY_trace_ch2());
+  //sq_PY_trace_ch2[it].add(conf.sq_PY_trace_ch2());
   //sq_Y_trace_ch_extra[it].add(conf.sq_Y_trace_ch_extra());
   sq_Y_trace_ch_modulo[it].add(conf.sq_Y_trace_ch_modulo());
   // sq_Ymom_trace_ch_modulo[it].add(conf.sq_Ymom_trace_ch_modulo());

@@ -63,10 +63,12 @@ struct obs_pars_t
   void write(string path="")
   {
     ener.print(path+"energy");
+    kin_ener.print(path+"kin_energy");
+    common_pot.print(path+"common_pot");
     sq_Y_trace.print(path+"sq_Y_trace");
-    fo_Y_trace.print(path+"fo_Y_trace");
+    //fo_Y_trace.print(path+"fo_Y_trace");
     sq_Y_trace_ch2.print(path+"sq_Y_trace_ch2");
-    sq_PY_trace_ch2.print(path+"sq_PY_trace_ch2");
+    //q_PY_trace_ch2.print(path+"sq_PY_trace_ch2");
     //sq_Y_trace_ch_extra.print(path+"sq_Y_trace_ch_extra");
     sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
     constraint.print(path+"constraint");
@@ -79,21 +81,21 @@ struct obs_pars_t
 private:
   obs_vec_t kin_ener;
   obs_vec_t common_pot;
-  obs_vec_t mass_pot;
+  // obs_vec_t mass_pot;
   obs_vec_t ener;
   obs_vec_t constraint;
-  obs_vec_t sq_X_trace;
-  obs_vec_t sq_X_trace_sub;
+  // obs_vec_t sq_X_trace;
+  // obs_vec_t sq_X_trace_sub;
   obs_vec_t sq_Y_trace;
-  obs_vec_t fo_Y_trace;
-  obs_vec_t sq_Ymom_trace;
-  obs_vec_t sq_Y_trace_ch1;
+  // obs_vec_t fo_Y_trace;
+  // obs_vec_t sq_Ymom_trace;
+  // obs_vec_t sq_Y_trace_ch1;
   obs_vec_t sq_Y_trace_ch2;
-  obs_vec_t sq_PY_trace_ch2;
-  obs_vec_t sq_Y_trace_ch_extra;
+  // obs_vec_t sq_PY_trace_ch2;
+  // obs_vec_t sq_Y_trace_ch_extra;
   obs_vec_t sq_Y_trace_ch_modulo;
-  obs_vec_t sq_Ymom_trace_ch_modulo;
-  obs_vec_t trace;
+  // obs_vec_t sq_Ymom_trace_ch_modulo;
+  // obs_vec_t trace;
   // map<int,array<obs_t,NCOL> > eig_x0;
   // map<int,array<obs_t,NCOL> > eig_x1;
   // map<int,array<obs_t,NCOL> > eig_x01;
