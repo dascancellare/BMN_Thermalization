@@ -76,9 +76,9 @@ struct obs_pars_t
     //for(int iL=0;iL<nL;iL++) L[iL].print(path+"L_"+to_string(iL));
     for(int i=0;i<ngrav;i++)
       {
-	grav[i+0*ngrav].print(path+"grav_x_"+to_string(i));
-	grav[i+1*ngrav].print(path+"grav_p_"+to_string(i));
-	grav[i+2*ngrav].print(path+"grav_x_tilde_"+to_string(i));
+	grav[i+0*ngrav].print(path+"grav_xx_"+to_string(i));
+	grav[i+1*ngrav].print(path+"grav_pp_"+to_string(i));
+	grav[i+2*ngrav].print(path+"grav_tt_"+to_string(i));
       }
   }
   
