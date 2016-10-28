@@ -13,6 +13,7 @@
 #include <Eigen/Dense>
 #include <unsupported/Eigen/MatrixFunctions>
 
+#include <vector>
 #include "tools.hpp"
 
 using namespace Eigen;
@@ -36,8 +37,8 @@ EXTERN_MATR vector<matr_t> generators;
 
 ///////////////////////////////////// prototypes //////////////////////////////
 
-//! fill the generators of SU(N)
-void fill_generators();
+//! fill the generators of SU(n)
+vector<matr_t> get_generators(int n);
 
 ///////////////////////////////////// templates ////////////////////////////////
 
@@ -65,7 +66,7 @@ template <class T> T square(T a)
 template <typename D> double trace_square(const MatrixBase<D> &M)
 {return (M*M).trace().real();}
 
-//! return the trace of the fouth power
+//! return the trace of the fourth power
 template <typename D> double trace_fourth(const MatrixBase<D> &M)
 {return (M*M*M*M).trace().real();}
 
