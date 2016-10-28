@@ -38,7 +38,44 @@ EXTERN_MATR vector<matr_t> generators;
 ///////////////////////////////////// prototypes //////////////////////////////
 
 //! fill the generators of SU(n)
-vector<matr_t> get_generators(int n);
+template <int n> vector<Matrix<complex<double>,n,n>> get_generators()
+{
+  vector<Matrix<complex<double>,n,n>> out;
+  
+  //real generators
+  for(int i=0;i<n;i++)
+    for(int j=i+1;j<n;j++)
+      {
+	Matrix<complex<double>,n,n> gen;
+	gen.Zero();
+	gen(i,j)=gen(j,i)=1;
+	out.push_back(gen);
+      }
+  
+  //diagonal generators
+  for(int i=1;i<n;i++)
+    {
+      Matrix<complex<double>,n,n> gen;
+      gen.Zero();
+      double norm=1/sqrt(i*(i+1)/2);
+      for(int j=0;j<i;j++) gen(j,j)=norm;
+      gen(i,i)=-i*norm;
+      out.push_back(gen);
+    }
+  
+  //imag generators
+  for(int i=0;i<n;i++)
+    for(int j=i+1;j<n;j++)
+      {
+	Matrix<complex<double>,n,n> gen;
+	gen.Zero();
+	gen(i,j)=+I;
+	gen(j,i)=-I;
+	out.push_back(gen);
+      }
+  
+  return out;
+}
 
 ///////////////////////////////////// templates ////////////////////////////////
 

@@ -77,7 +77,7 @@ void init(int narg,char **arg)
   MPI_Comm_rank(MPI_COMM_WORLD,&proc);
   init_time=MPI_Wtime();
   
-  generators=get_generators(NCOL);
+  generators=get_generators<NCOL>();
   gen.seed(seed);
   //set the range of configurations relative to the proc
   int nper_node=max(1,niters/nprocs);

@@ -66,7 +66,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
       }
   
   //get all generators
-  vector<matr_t> gen=get_generators(nX);
+  vector<Matrix<complex<double>,nX,nX>> gen=get_generators<nX>();
   
   //project on the generators
   for(int i=0;i<ngrav;i++)
