@@ -49,6 +49,32 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   //   for(int i=imin[iset];i<imax[iset];i++)
   //     for(int j=i+1;j<imax[iset];j++)
   // 	L[ipair++][it].add(pow((conf.X[i]*conf.P[j]-conf.X[j]*conf.P[i]).trace().real(),2));
+  
+  //gravity tensor
+  //compute the tilde
+  vector<matr_t> X_tilde(nX);
+  for(int iX=0;iX<nX;iX++) X_tilde[iX]=comm(conf.X[(iX+1)%nX],conf.X[(iX+2)%nX]);
+  
+  //compute the trace over colour
+  Matrix<complex<double>,nX,nX> xx,pp,xxt;
+  for(int i=0;i<nX;i++)
+    for(int j=i;j<nX;j++)
+      {
+	xx (i,j)=xx (j,i)=(conf.X[i]* conf.X[j]).trace();
+	pp (i,j)=pp (j,i)=(conf.P[i]* conf.P[j]).trace();
+	xxt(i,j)=xxt(j,i)=(conf.X[i]*X_tilde[j]).trace();
+      }
+  
+  //get all generators
+  vector<matr_t> gen=get_generators(nX);
+  
+  //project on the generators
+  for(int i=0;i<ngrav;i++)
+    {
+      grav[i+0*ngrav][it].add((gen[i]*xx).trace().real()/2);
+      grav[i+1*ngrav][it].add((gen[i]*pp).trace().real()/2);
+      grav[i+2*ngrav][it].add((gen[i]*xxt).trace().real()/2);
+    }
 }
 
 double theory_t::constraint(conf_t &conf)

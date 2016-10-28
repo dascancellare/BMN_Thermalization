@@ -18,6 +18,7 @@
 
 using namespace std;
 
+const int ngrav=nX*(nX+1)/2-1;
 const int nL=(nX*(nX-1))/2+((glb_N-nX)*((glb_N-nX)-1))/2;
 
 struct obs_t : pair<int,double>
@@ -73,6 +74,12 @@ struct obs_pars_t
     sq_Y_trace_ch_modulo.print(path+"sq_Y_trace_ch_modulo");
     constraint.print(path+"constraint");
     //for(int iL=0;iL<nL;iL++) L[iL].print(path+"L_"+to_string(iL));
+    for(int i=0;i<ngrav;i++)
+      {
+	grav[i+0*ngrav].print(path+"grav_x_"+to_string(i));
+	grav[i+1*ngrav].print(path+"grav_p_"+to_string(i));
+	grav[i+2*ngrav].print(path+"grav_x_tilde_"+to_string(i));
+      }
   }
   
   //perform all measurement
@@ -94,6 +101,7 @@ private:
   // obs_vec_t sq_PY_trace_ch2;
   // obs_vec_t sq_Y_trace_ch_extra;
   obs_vec_t sq_Y_trace_ch_modulo;
+  array<obs_vec_t,3*ngrav> grav;
   // obs_vec_t sq_Ymom_trace_ch_modulo;
   // obs_vec_t trace;
   // map<int,array<obs_t,NCOL> > eig_x0;
