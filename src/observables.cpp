@@ -56,14 +56,15 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
   for(int iX=0;iX<nX;iX++) X_tilde[iX]=comm(conf.X[(iX+1)%nX],conf.X[(iX+2)%nX]);
   
   //compute the trace over colour
-  Matrix<complex<double>,nX,nX> xx,pp,tt;
+  Matrix<complex<double>,nX,nX> xx,pp,tt,vv;
   for(int i=0;i<nX;i++)
     for(int j=i;j<nX;j++)
       {
 	xx(i,j)=xx(j,i)=(conf.X[i] * conf.X[j]).trace();
 	pp(i,j)=pp(j,i)=(conf.P[i] * conf.P[j]).trace();
 	tt(i,j)=tt(j,i)=(X_tilde[i]*X_tilde[j]).trace();
-      }
+	for(int k=i;k<nX;k++) vv(i,j)=vv(j,i)+=(comm(conf.X[i],conf.X[k])*comm(conf.X[j],conf.X[k])).trace();
+  }
   
   //get all generators
   vector<Matrix<complex<double>,nX,nX>> gen=get_generators<nX>();
@@ -74,6 +75,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
       grav[i+0*ngrav][it].add((gen[i]*xx).trace().real()/2);
       grav[i+1*ngrav][it].add((gen[i]*pp).trace().real()/2);
       grav[i+2*ngrav][it].add((gen[i]*tt).trace().real()/2);
+      grav[i+3*ngrav][it].add((gen[i]*vv).trace().real()/2);
     }
 }
 

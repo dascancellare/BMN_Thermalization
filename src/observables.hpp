@@ -79,6 +79,7 @@ struct obs_pars_t
 	grav[i+0*ngrav].print(path+"grav_xx_"+to_string(i));
 	grav[i+1*ngrav].print(path+"grav_pp_"+to_string(i));
 	grav[i+2*ngrav].print(path+"grav_tt_"+to_string(i));
+	grav[i+3*ngrav].print(path+"grav_vv_"+to_string(i));
       }
   }
   
@@ -101,7 +102,7 @@ private:
   // obs_vec_t sq_PY_trace_ch2;
   // obs_vec_t sq_Y_trace_ch_extra;
   obs_vec_t sq_Y_trace_ch_modulo;
-  array<obs_vec_t,3*ngrav> grav;
+  array<obs_vec_t,4*ngrav> grav;
   // obs_vec_t sq_Ymom_trace_ch_modulo;
   // obs_vec_t trace;
   // map<int,array<obs_t,NCOL> > eig_x0;
