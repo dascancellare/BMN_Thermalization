@@ -64,7 +64,7 @@ void obs_pars_t::measure_all(double t,theory_t &theory,conf_t &conf)
 	pp(i,j)=pp(j,i)=(conf.P[i] * conf.P[j]).trace();
 	tt(i,j)=tt(j,i)=(X_tilde[i]*X_tilde[j]).trace();
 	vv(i,j)=0;
-	for(int k=i;k<nX;k++) vv(i,j)+=(comm(conf.X[i],conf.X[k])*comm(conf.X[j],conf.X[k])).trace();
+	for(int k=nX;k<glb_N;k++) vv(i,j)+=(comm(conf.X[i],conf.X[k])*comm(conf.X[j],conf.X[k])).trace();
 	vv(j,i)=vv(i,j);
   }
   
